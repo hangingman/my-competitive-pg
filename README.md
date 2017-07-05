@@ -1,5 +1,16 @@
 # my-competitive-pg
+
 競技プログラミングで解いた問題を格納
+
+## コードの種別
+
+### aizu(AOJ)
+
+* [AIZU ONLINE JUDGE: Programming Challenge](http://judge.u-aizu.ac.jp/onlinejudge/)
+
+### atcoder(AtCoder)
+
+* [AtCoder](https://atcoder.jp/)
 
 ## アルゴリズム学びフロー
 
