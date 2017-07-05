@@ -1,0 +1,10 @@
+import std.stdio;
+import std.conv;
+import std.string;
+
+void main()
+{
+  string s = chomp(readln()); // ??????????????????
+  long l = to!long(s);
+  writeln(l*l*l);
+}
