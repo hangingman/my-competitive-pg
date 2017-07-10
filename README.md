@@ -7,10 +7,12 @@
 ### aizu(AOJ)
 
 * [AIZU ONLINE JUDGE: Programming Challenge](http://judge.u-aizu.ac.jp/onlinejudge/)
+    * [AOJ - 修行](http://shugyo.hadrori.jp/aoj?user_id=hiroyuking)
 
 ### atcoder(AtCoder)
 
-* [AtCoder](https://atcoder.jp/)
+* [AtCoder](https://atcoder.jp/)  
+    * [AtCoderで解いた問題の履歴](http://kenkoooo.com/atcoder/?name=hiroyuking&rivals=&kind=index)
 
 ## アルゴリズム学びフロー
 
