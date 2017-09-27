@@ -1,15 +1,14 @@
 #lines = <<'EOS'
-#2
+#567914
 #EOS
 
 lines = $stdin.read
 array = lines.split("\n")
 n = array[0].to_i
 
-#start_time = Time.now
+start_time = Time.now
 
 def tribonacci(n)
-
   if n == 1 or n == 2
     0
   elsif n == 3
@@ -20,12 +19,11 @@ def tribonacci(n)
     t2 = 1
     tn = 0
     4.upto(n) do
-      tn = t0 + t1 + t2
+      tn = (t0 + t1 + t2) % 10007
       t0,t1,t2 = t1,t2,tn
     end
-    tn % 10007
+    tn
   end
-
 end
 
 puts tribonacci(n)
