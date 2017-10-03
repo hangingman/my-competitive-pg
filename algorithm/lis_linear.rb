@@ -10,7 +10,7 @@
 #
 
 lines = <<'EOS'
-0 8 4 12 2 10 6 14 1 9 5 13 3 11 7 15
+9 5 2 8 7 3 1 6 4 5
 EOS
 
 #lines = $stdin.read
@@ -18,7 +18,6 @@ array = lines.split("\n")
 
 def get_lis(arr)
   lis_arr = Array.new(arr.length){1}
-  length = 1
 
   puts arr.to_s
   puts lis_arr.to_s
