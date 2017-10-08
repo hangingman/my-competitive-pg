@@ -1,10 +1,14 @@
-lines = $stdin.read
+lines = <<'EOS'
+ABCD
+EOS
+
+#lines = $stdin.read
 array = lines.split("\n")
 
-count = 0
+S = array[0].to_s
 
-array[0].to_s.split("").map do |s|
-  count = count + 1 if s == '1'
+if S[0] == S[1] and S[1] != S[2] and S[2] == S[3]
+  puts "Yes"
+else
+  puts "No"
 end
-
-puts count
