@@ -16,18 +16,22 @@ A.each_with_index do |a, idx|
   idx += 1
 end
 
-for i in 0...M
-  for j in 0...N
-    printf "#{mat[i][j]} "
-  end
-  puts ""
-end
+# for i in 0...M
+#   for j in 0...N
+#     printf "#{mat[i][j]} "
+#   end
+#   puts ""
+# end
 
 def show_bottom_col(mat, col, row = 0)
   while row < M
     #puts "s:row = #{row}, col = #{col}"
     if mat[row][col] == 1
       col += 1
+      row += 1
+    elsif mat[row][col-1] == 1
+      col -= 1
+      row += 1
     else
       row += 1
     end
