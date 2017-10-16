@@ -1,19 +1,16 @@
-
 lines = <<'EOS'
-6 2 6
-4 5
-0 1
-0 2
-1 3
+4 2 3
 2 3
-3 4
-3 5
+0 1
+1 2
+1 3
 EOS
 
 #lines = $stdin.read
 array = lines.split("\n")
 
 N,G,E = array[0].split(" ").map(&:to_i)
+parr  = array[1].split(" ").map(&:to_i)
 
 Node = Struct.new(:parent, :left, :right)
 nodes = Array.new(N) { Node.new }
