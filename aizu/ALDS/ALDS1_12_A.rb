@@ -7,7 +7,7 @@ lines = <<'EOS'
  -1 -1 1 3 -1
 EOS
 
-Node = Struct.new(:u, :key, :pi)
+Node = Struct.new(:u, :d, :c, :p)
 
 class Graph
   attr :nodes, :mat
@@ -16,12 +16,20 @@ class Graph
     @mat   = matrix.dup
   end
 
-  def prim(weight, root)
+  def prim(start = 1)
     for node in @nodes
-      node.key = Float::INFINITY
-      node.pi  = nil
+      node.d = Float::INFINITY
+      node.p = nil
+      node.c = :white
     end
-    root.key = 0
+    start = (start-1).to_i
+    @nodes[start].d = 0
+    @nodes[start].p = -1
+
+    while true
+      mincost = Float::INFINITY
+      break
+    end
   end
 end
 
@@ -40,4 +48,4 @@ for i in 1...N
 end
 
 graph = Graph.new(N, mat)
-graph.prim(1, graph.nodes.first)
+graph.prim(1)
