@@ -1,3 +1,14 @@
+#_____________|
+# | 1 2 3 4 5 |
+#-------------|
+#1|   2 3 1   |
+#2| 2     4   |
+#3| 3     1 1 |
+#4| 1 4 1   3 |
+#5|     1 3   |
+#-------------|
+# 1 > 4 > 3 > 5 > 2 ?
+
 lines = <<'EOS'
 5
  -1 2 3 1 -1
@@ -19,7 +30,7 @@ class Graph
   end
 
   def edge_exists?(row, col)
-    printf "  edge_exists?(#{row}, #{col}) => "
+    #printf "  edge_exists?(#{row}, #{col}) => "
     row -= 1
     col -= 1
     result = if @mat[row][col] != -1 # or @mat[col][row] != -1
@@ -27,7 +38,7 @@ class Graph
              else
                false
              end
-    puts "#{result} => cost: #{@mat[row][col]}"
+    #puts "#{result} => cost: #{@mat[row][col]}"
     result
   end
 
@@ -51,7 +62,7 @@ class Graph
           next_u  = node.u
         end
       end
-      puts "mincost = #{mincost}, next_u = #{next_u}"
+      #puts "mincost = #{mincost}, next_u = #{next_u}"
 
       break if mincost == INF
 
@@ -62,7 +73,7 @@ class Graph
           node.d = mat[next_u-1][v-1]
           node.p = next_u
           node.c = :gray
-          puts "  update: node(#{node.u}), d = #{node.d}, parent = #{next_u}"
+          #puts "  update: node(#{node.u}), d = #{node.d}, parent = #{next_u}"
           node
         else
           node
@@ -78,7 +89,7 @@ array = lines.split("\n")
 N   = array[0].to_i
 mat = Array.new(N).map{Array.new(N, 0)}
 
-for i in 1...N
+for i in 1..N
   row  = i - 1
   cols = array[i].split(" ").map(&:to_i)
   cols.each_with_index do |col, idx|
@@ -89,4 +100,13 @@ end
 graph = Graph.new(N, mat)
 graph.prim(1)
 
-puts graph.nodes.map{|n| n.to_s}.to_a
+
+sum = 0
+
+graph.nodes.each_with_index do |n,i|
+    if graph.nodes[i].p != -1
+        sum += mat[i].select{|e| e != -1}.min
+    end
+end
+
+puts sum
