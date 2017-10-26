@@ -42,6 +42,25 @@ class Graph
     result
   end
 
+  def dot()
+    puts "graph G {"
+    edges = []
+
+    @nodes.each_with_index do |node,i|
+      mat[i].map.with_index.select do |w,idx|
+        w != -1
+      end.each do |w,idx|
+        edge = [node.u, idx+1].sort
+        edges << edge
+      end
+    end
+    edges = edges.uniq
+    edges.each do |e|
+      puts "  \"#{e.first}\" -- \"#{e.last}\" [label=#{mat[e.first-1][e.last-1]}]"
+    end
+    puts "}"
+  end
+
   def prim(start = 1)
     @nodes = @nodes.each do |node|
       node.d = INF
@@ -100,7 +119,6 @@ end
 graph = Graph.new(N, mat)
 graph.prim(1)
 
-
 sum = 0
 
 graph.nodes.each_with_index do |n,i|
@@ -109,4 +127,5 @@ graph.nodes.each_with_index do |n,i|
     end
 end
 
+puts graph.dot
 puts sum
