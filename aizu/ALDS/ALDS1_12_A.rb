@@ -78,6 +78,23 @@ class Graph
     puts "}"
   end
 
+  def dot_after_prim(start = 1)
+    # start prim
+    prim(start)
+
+    # then, generate dot
+    puts "graph afterPrim {"
+    gen_uniq_edges.each do |e|
+      no = mat[e.first-1.to_i].detect {|m| m != -1 and (m == e.last-1 or m == e.first-1) }
+      if no.nil?
+        puts "  \"#{e.first}\" -- \"#{e.last}\" [label=\"w=#{mat[e.first-1][e.last-1]}\"]"
+      else
+        puts "  \"#{e.first}\" -- \"#{e.last}\" [label=\"w=#{mat[e.first-1][e.last-1]} (#{no})\", penwidth=3]"
+      end
+    end
+    puts "}"
+  end
+
   def prim(start = 1)
     @nodes = @nodes.each do |node|
       node.d = INF
@@ -146,5 +163,5 @@ graph.nodes.each_with_index do |n,i|
     end
 end
 
-#puts graph.dot_before_prim
-puts sum
+puts graph.dot_after_prim
+#puts sum
