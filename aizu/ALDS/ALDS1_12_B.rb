@@ -96,8 +96,8 @@ class Graph
       @nodes[(next_u-1).to_i].c = :black
 
       @nodes = @nodes.map.with_index(1) do |node, v|
-        if node.c != :black and edge_exists?(next_u, v) and mat[next_u-1][v-1] < node.d
-          node.d = mat[next_u-1][v-1]
+        if node.c != :black and edge_exists?(next_u, v) and @nodes[(next_u-1).to_i].d + mat[next_u-1][v-1] < node.d
+          node.d = @nodes[(next_u-1).to_i].d + mat[next_u-1][v-1]
           node.p = next_u
           node.c = :gray
           #puts "  update: node(#{node.u}), d = #{node.d}, parent = #{next_u}"
@@ -129,16 +129,9 @@ for i in 1..N
 end
 
 graph = Graph.new(N, mat)
+
 graph.dijkstra(1)
 
 sum = 0
 
-graph.nodes.each_with_index do |n,i|
-    if graph.nodes[i].p != -1
-      sum += mat[i].detect do |e|
-        e != -1 and e == n.d
-      end
-    end
-end
-
-puts sum
+graph.nodes.each{|n| puts n.to_s}
