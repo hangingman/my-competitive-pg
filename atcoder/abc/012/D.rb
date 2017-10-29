@@ -1,101 +1,134 @@
-class Array
-  alias_method :enqueue, :push
-  alias_method :dequeue, :shift
-end
-
-Node = Struct.new(:u, :k, :v, :c, :d, :w, :pi)
-
+INF  = 999999999
+Node = Struct.new(:u, :d, :c, :p)
+ 
 class Graph
-
-  attr :nodes
-
-  def initialize(n)
+  attr :nodes, :mat, :u_start
+  def initialize(n, matrix, u_start_with = 1)
     @nodes = Array.new(n){ Node.new }
+    @nodes.each_with_index{|node,idx| node.u = idx+u_start_with}
+    @u_start = u_start_with
+    @mat   = matrix.dup
   end
-
-  def add_graph_node(u, v, w)
-    puts "add_graph_node(#{u}, #{v}, #{w})"
-    @nodes[u-1].u = u
-    if not v.nil?
-      (@nodes[u-1].v ||= []).push(v)
-      @nodes[u-1].k = @nodes[u-1].v.length ||= 0
-    else
-      @nodes[u-1].v = [] if @nodes[u-1].v.nil?
-      @nodes[u-1].k = 0
+ 
+  def edge_exists?(row, col)
+    #printf "  edge_exists?(#{row}, #{col}) => "
+    row -= @u_start
+    col -= @u_start
+    result = if @mat[row][col] != -1 # or @mat[col][row] != -1
+               true
+             else
+               false
+             end
+    #puts "#{result} => cost: #{@mat[row][col]}"
+    result
+  end
+ 
+  def gen_uniq_edges()
+    edges = []
+    @nodes.each_with_index do |node,i|
+      mat[i].map.with_index.select do |w,idx|
+        w != -1
+      end.each do |w,idx|
+        edge = [node.u, idx+@u_start]
+        edges << edge
+      end
     end
-    @nodes[u-1].c = :white
-    @nodes[u-1].d = -1
-    @nodes[u-1].w = w
-    @nodes[u-1].pi = nil
+    edges.uniq
   end
-
-  def reset()
-    @nodes.each do |node|
-      node.c  = :white
-      node.d  = -1
-      node.pi = nil
+ 
+  def dot_before_dijkstra()
+    puts "digraph beforeDijkstra {"
+    gen_uniq_edges.each do |e|
+      puts "  \"#{e.first}\" -> \"#{e.last}\" [label=#{mat[e.first-@u_start][e.last-@u_start]}]"
     end
+    puts "}"
   end
-
-  def dist()
-    puts "d : #{@nodes.map{|node| node.d}.to_a.to_s}"
-    puts "pi: #{@nodes.map{|node| node.pi}.to_a.to_s}"
+ 
+  def dot_after_dijkstra(start = 1)
+    # start dijkstra
+    dijkstra(start)
+ 
+    # then, generate dot
+    puts "digraph afterDijkstra {"
+    gen_uniq_edges.each do |e|
+      no = mat[e.first-1.to_i].detect {|m| m != -1 and (m == e.last-1 or m == e.first-1) }
+      if no.nil?
+        puts "  \"#{e.first}\" -- \"#{e.last}\" [label=\"w=#{mat[e.first-1][e.last-1]}\"]"
+      else
+        puts "  \"#{e.first}\" -- \"#{e.last}\" [label=\"w=#{mat[e.first-1][e.last-1]} (#{no})\", penwidth=3]"
+      end
+    end
+    puts "}"
   end
-
-  def bfs(start, queue)
-
-    start_idx = (start - 1).to_i
-    @nodes[start_idx].c  = :gray
-    @nodes[start_idx].d  = 0
-    @nodes[start_idx].pi = nil
-    queue.enqueue(@nodes[start_idx])
-
-    while not queue.empty?
-
-      u = queue.dequeue
-      break if u.v.nil?
-
-      u.v.each do |label|
-        v = @nodes[label-1]
-        if v.c == :white
-          v.c  = :gray
-          v.d  = u.d.to_i + u.w
-          v.pi = u
-          queue.enqueue(v)
+ 
+  def dijkstra(start = 1)
+    @nodes = @nodes.each do |node|
+      node.d = INF
+      node.p = nil
+      node.c = :white
+    end
+ 
+    start = (start-@u_start).to_i
+    @nodes[start].d = 0
+    @nodes[start].p = -1
+    next_u = nil
+ 
+    while true
+      mincost = INF
+      @nodes.each do |node|
+        if node.c != :black and node.d < mincost
+          #puts "node.d = #{node.d}"
+          mincost = node.d
+          next_u  = node.u
         end
       end
-      u.c = :black
+      #puts "mincost = #{mincost}, next_u = #{next_u}"
+ 
+      break if mincost == INF
+ 
+      @nodes[next_u].c = :black
+ 
+      @nodes = @nodes.map.with_index do |node, v|
+        if node.c != :black and edge_exists?(next_u, v) and @nodes[next_u].d + mat[next_u][v] < node.d
+          node.d = @nodes[next_u].d + mat[next_u][v]
+          node.p = next_u
+          node.c = :gray
+          node
+        else
+          node
+        end
+      end
     end
   end
 end
-
+ 
 lines = <<'EOS'
-5 5
-1 2 12
-2 3 14
-3 4 7
-4 5 9
-5 1 18
+4 6
+1 2 1
+2 3 1
+3 4 1
+4 1 1
+1 3 1
+4 2 1
 EOS
 
 #lines = $stdin.read
 array = lines.split("\n")
-
-N,M   = array[0].split(" ").map(&:to_i)
-graph = Graph.new(N)
-
-array[1..M].each do |str|
-  a,b,t = str.split(" ").map(&:to_i)
-  graph.add_graph_node(a, b, t)
-  graph.add_graph_node(b, a, t)
+ 
+N,M = array[0].split(" ").map(&:to_i)
+mat = Array.new(N).map{Array.new(N, -1)}
+ 
+for i in 1...N
+  u,v,w = array[i].split(" ").map(&:to_i)
+  mat[u-1][v-1] = w
+  mat[v-1][u-1] = w
 end
-
-graph.nodes.each{|n| puts n.to_s}
-
-puts ""
-
-graph.bfs(1, [])
-
-graph.nodes.each{|n| puts n.to_s}
-
-puts graph.nodes.find{|n| n.u == N}.d
+ 
+# 0-indexed
+graph = Graph.new(N, mat, 0)
+ 
+# start-with 0
+graph.dot_before_dijkstra()
+graph.dijkstra(0)
+ 
+graph.nodes.each{|n| puts "#{n.u} #{n.d}"}
