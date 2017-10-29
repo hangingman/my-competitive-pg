@@ -1,27 +1,33 @@
 lines = <<'EOS'
-5
-0 3 2 3 3 1 1 2
-1 2 0 2 3 4
-2 3 0 3 3 1 4 1
-3 4 2 1 0 1 1 4 4 3
-4 2 2 1 3 3
+10
+0 2 1 1 2 3
+1 2 3 3 2 1
+2 2 3 1 6 10
+3 1 4 1
+4 1 7 1
+5 2 3 1 6 1
+6 2 3 1 8 1
+7 2 5 1 8 4
+8 1 9 100000
+9 0
 EOS
 
 INF  = 999999999
 Node = Struct.new(:u, :d, :c, :p)
 
 class Graph
-  attr :nodes, :mat
-  def initialize(n, matrix)
+  attr :nodes, :mat, :u_start
+  def initialize(n, matrix, u_start_with = 1)
     @nodes = Array.new(n){ Node.new }
-    @nodes.each_with_index{|node,idx| node.u = idx+1}
+    @nodes.each_with_index{|node,idx| node.u = idx+u_start_with}
+    @u_start = u_start_with
     @mat   = matrix.dup
   end
 
   def edge_exists?(row, col)
     #printf "  edge_exists?(#{row}, #{col}) => "
-    row -= 1
-    col -= 1
+    row -= @u_start
+    col -= @u_start
     result = if @mat[row][col] != -1 # or @mat[col][row] != -1
                true
              else
@@ -37,7 +43,7 @@ class Graph
       mat[i].map.with_index.select do |w,idx|
         w != -1
       end.each do |w,idx|
-        edge = [node.u, idx+1].sort
+        edge = [node.u, idx+@u_start].sort
         edges << edge
       end
     end
@@ -47,7 +53,7 @@ class Graph
   def dot_before_dijkstra()
     puts "graph beforeDijkstra {"
     gen_uniq_edges.each do |e|
-      puts "  \"#{e.first}\" -- \"#{e.last}\" [label=#{mat[e.first-1][e.last-1]}]"
+      puts "  \"#{e.first}\" -- \"#{e.last}\" [label=#{mat[e.first-@u_start][e.last-@u_start]}]"
     end
     puts "}"
   end
@@ -75,16 +81,17 @@ class Graph
       node.p = nil
       node.c = :white
     end
-    start = (start-1).to_i
+
+    start = (start-@u_start).to_i
     @nodes[start].d = 0
     @nodes[start].p = -1
     next_u = nil
 
     while true
       mincost = INF
-
       @nodes.each do |node|
         if node.c != :black and node.d < mincost
+          #puts "node.d = #{node.d}"
           mincost = node.d
           next_u  = node.u
         end
@@ -93,14 +100,13 @@ class Graph
 
       break if mincost == INF
 
-      @nodes[(next_u-1).to_i].c = :black
+      @nodes[next_u].c = :black
 
-      @nodes = @nodes.map.with_index(1) do |node, v|
-        if node.c != :black and edge_exists?(next_u, v) and @nodes[(next_u-1).to_i].d + mat[next_u-1][v-1] < node.d
-          node.d = @nodes[(next_u-1).to_i].d + mat[next_u-1][v-1]
+      @nodes = @nodes.map.with_index do |node, v|
+        if node.c != :black and edge_exists?(next_u, v) and @nodes[next_u].d + mat[next_u][v] < node.d
+          node.d = @nodes[next_u].d + mat[next_u][v]
           node.p = next_u
           node.c = :gray
-          #puts "  update: node(#{node.u}), d = #{node.d}, parent = #{next_u}"
           node
         else
           node
@@ -118,20 +124,27 @@ mat = Array.new(N).map{Array.new(N, -1)}
 
 for i in 1..N
   u    = array[i].split(" ").first.to_i
+  k    = array[i].split(" ")[1].to_i
   cols = array[i].split(" ").drop(2)
   cols = cols.each_slice(2).to_a
 
+  #debug = "u => #{u}, k => #{k}"
   cols.each do |col|
-    v,w = col.first.to_i-1,col.last.to_i
-    mat[u-1][v] = w
-    mat[v][u-1] = w
+    v,w = col.first.to_i,col.last.to_i
+    #debug += "| v,w = #{v},#{w} "
+    mat[u][v] = w
+    #mat[v][u] = w
   end
+  #puts debug
 end
 
-graph = Graph.new(N, mat)
+# 0-indexed
+graph = Graph.new(N, mat, 0)
 
-graph.dijkstra(1)
+# start-with 0
+# graph.dot_before_dijkstra()
+graph.dijkstra(0)
 
 sum = 0
 
-graph.nodes.each{|n| puts n.to_s}
+graph.nodes.each{|n| puts "#{n.u} #{n.d}"}
