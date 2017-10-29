@@ -51,9 +51,9 @@ class Graph
   end
 
   def dot_before_dijkstra()
-    puts "graph beforeDijkstra {"
+    puts "digraph beforeDijkstra {"
     gen_uniq_edges.each do |e|
-      puts "  \"#{e.first}\" -- \"#{e.last}\" [label=#{mat[e.first-@u_start][e.last-@u_start]}]"
+      puts "  \"#{e.first}\" -> \"#{e.last}\" [label=#{mat[e.first-@u_start][e.last-@u_start]}]"
     end
     puts "}"
   end
@@ -63,13 +63,13 @@ class Graph
     dijkstra(start)
 
     # then, generate dot
-    puts "graph afterDijkstra {"
+    puts "digraph afterDijkstra {"
     gen_uniq_edges.each do |e|
       no = mat[e.first-1.to_i].detect {|m| m != -1 and (m == e.last-1 or m == e.first-1) }
       if no.nil?
-        puts "  \"#{e.first}\" -- \"#{e.last}\" [label=\"w=#{mat[e.first-1][e.last-1]}\"]"
+        puts "  \"#{e.first}\" -> \"#{e.last}\" [label=\"w=#{mat[e.first-1][e.last-1]}\"]"
       else
-        puts "  \"#{e.first}\" -- \"#{e.last}\" [label=\"w=#{mat[e.first-1][e.last-1]} (#{no})\", penwidth=3]"
+        puts "  \"#{e.first}\" -> \"#{e.last}\" [label=\"w=#{mat[e.first-1][e.last-1]} (#{no})\", penwidth=3]"
       end
     end
     puts "}"
