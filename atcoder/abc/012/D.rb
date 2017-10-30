@@ -37,9 +37,9 @@ class Graph
   end
 
   def dot_before_dijkstra()
-    puts "digraph beforeDijkstra {"
+    puts "graph beforeDijkstra {"
     gen_uniq_edges.each do |e|
-      puts "  \"#{e.first}\" -> \"#{e.last}\" [label=#{mat[e.first-@u_start][e.last-@u_start]}]"
+      puts "  \"#{e.first}\" -- \"#{e.last}\" [label=#{mat[e.first-@u_start][e.last-@u_start]}]"
     end
     puts "}"
   end
@@ -120,21 +120,18 @@ mat = Array.new(N).map{Array.new(N, -1)}
 for i in 1..M
   u,v,w = array[i].split(" ").map(&:to_i)
   mat[u-1][v-1] = w
-  #mat[v-1][u-1] = w
+  mat[v-1][u-1] = w
 end
 
 # 0-indexed
 graph = Graph.new(N, mat, 0)
 
 # start-with 0
-# graph.dot_before_dijkstra()
-# graph.nodes.each do |n|
-#   graph.dijkstra(n.u)
-#   puts "from #{n.u}"
-#   graph.nodes.each{|node| puts "  #{node.u} #{node.d}"}
-# end
+#graph.dot_before_dijkstra()
 
-graph.dijkstra(0)
-max_d = graph.nodes.max_by {|n| n.d }.d
-max_t = graph.nodes.min_by {|n| (n.d - max_d / 2).abs }.d
-puts max_t
+min_t = graph.nodes.map do |n|
+  graph.dijkstra(n.u)
+  graph.nodes.max_by{|node| node.d}.d
+end.to_a.min
+
+puts min_t
