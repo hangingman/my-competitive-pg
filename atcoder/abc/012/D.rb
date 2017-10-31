@@ -68,6 +68,9 @@ class Graph
       node.c = :white
     end
 
+    p @nodes
+    return
+
     start = (start-@u_start).to_i
     @nodes[start].d = 0
     @nodes[start].p = -1

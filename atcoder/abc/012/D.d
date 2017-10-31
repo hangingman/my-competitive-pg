@@ -4,13 +4,6 @@ import std.string;
 import std.format;
 import std.algorithm;
 
-string lines = q"[5 5
-1 2 12
-2 3 14
-3 4 7
-4 5 9
-5 1 18]";
-
 int INF = 999999999;
 
 enum Color {
@@ -33,10 +26,11 @@ class Graph {
 
   this(int n, int[][] matrix, int u_start_with) {
     this.nodes = new Node[n];
-    foreach (int i, Node node; nodes) {
+    foreach (int i, ref Node node; nodes) {
       node.u = i + u_start_with;
       node.p = -1;
       node.c = Color.WHITE;
+      node.d = INF;
     }
     this.u_start = u_start_with;
     this.mat     = matrix;
@@ -52,8 +46,8 @@ class Graph {
     }
   }
 
-  void dijkstra(int s) {
-    auto start = s - this.u_start;
+  void dijkstra(int start) {
+
     this.nodes[start].d = 0;
     this.nodes[start].p = -1;
 
@@ -62,27 +56,28 @@ class Graph {
       int next_u  = -1;
 
       foreach (ref Node node; this.nodes) {
-	//writeln(node.c);
-	if (node.c != Color.BLACK && node.d < mincost) {
-	  mincost = node.d;
-	  next_u  = node.u;
-	  writef("mincost = %d, next_u = %d\n", mincost, next_u);
-	}
+        if (node.c != Color.BLACK && node.d < mincost) {
+          mincost = node.d;
+          next_u  = node.u;
+          //writef("mincost = %d, next_u = %d\n", mincost, next_u);
+        }
       }
 
       if (mincost==INF) {
-	break;
+        break;
       }
 
+      this.nodes[next_u].c = Color.BLACK;
+
       foreach (int v, ref Node node; this.nodes) {
-	if (node.c != Color.BLACK
-	    && edge_exists(next_u, v)
-	    && this.nodes[next_u].d + mat[next_u][v] < node.d) {
-	  node.d = this.nodes[next_u].d + mat[next_u][v];
-	  node.p = next_u;
-	  node.c = Color.GRAY;
-	}
+        if (node.c != Color.BLACK && edge_exists(next_u, v) && this.nodes[next_u].d + mat[next_u][v] < node.d) {
+          node.d = this.nodes[next_u].d + mat[next_u][v];
+          node.p = next_u;
+          node.c = Color.GRAY;
+          //writef("index: %d, node.u: %d\n", v, node.u);
+        }
       }
+
       // end
     }
   }
@@ -92,16 +87,22 @@ void main()
 {
 
   // START
-  //string lines;
-  //string buf;
-  //while (!stdin.eof) {
-  //  buf = stdin.readln();
-  //  lines ~= buf;
-  //}
+  string lines;
+  string buf;
+  while (!stdin.eof) {
+    buf = stdin.readln();
+    lines ~= buf;
+  }
   // END
 
+//string lines = q"[5 5
+//1 2 12
+//2 3 14
+//3 4 7
+//4 5 9
+//5 1 18]";
   string[] array = splitLines(lines);
-  writeln(to!string(array));
+  //writeln(to!string(array));
 
   int N = array[0].split(" ")[0].to!int;
   int M = array[0].split(" ")[1].to!int;
@@ -113,7 +114,7 @@ void main()
     }
   }
 
-  for (int i = 1; i < M; i++) {
+  for (int i = 1; i < M+1; i++) {
     int u = array[i].split(" ")[0].to!int;
     int v = array[i].split(" ")[1].to!int;
     int w = array[i].split(" ")[2].to!int;
@@ -122,9 +123,13 @@ void main()
   }
 
   Graph graph = new Graph(N, mat, 0);
-  graph.dijkstra(0);
+  int[] max_array = new int[](N);
 
-  foreach(Node n; graph.nodes) {
-    writef("Node.u = %d\n", n.u);
+  foreach (int n, ref int elem; max_array) {
+    Graph g = new Graph(N, mat, 0);
+    g.dijkstra(n);
+    elem = g.nodes.map!(node => node.d).reduce!(max);
   }
+
+  writeln(reduce!(min)(max_array));
 }
