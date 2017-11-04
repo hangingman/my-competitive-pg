@@ -1,5 +1,3 @@
-require 'bigdecimal'
-
 lines = <<'EOS'
 81
 EOS
@@ -7,7 +5,12 @@ EOS
 #lines = $stdin.read
 array = lines.split("\n")
 
-N = BigDecimal(array[0])
+N = array[0].to_i
 
-r = Math.sqrt(N).round
-puts r*r
+40000.downto(0) do |i|
+  pow = i*i
+  if pow <= N
+    puts pow
+    break
+  end
+end
