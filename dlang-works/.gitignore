@@ -1,5 +1,6 @@
 *.o
 seq
 assigns
+assigns_ex
 read_nu
 readln2
