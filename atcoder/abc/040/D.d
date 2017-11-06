@@ -36,31 +36,40 @@ class UnionFind {
   }
 }
 
-void main() {
-  string lines;
-  string buf;
-
-  while (!stdin.eof) {
-    buf = stdin.readln();
-    lines ~= buf;
+void stringsTo(string, T...)(string str, ref T t) {
+  auto s = str.split();
+  assert(s.length == t.length);
+  foreach(ref ti; t) {
+    ti = s[0].to!(typeof(ti));
+    s = s[1..$];
   }
+}
 
-//  string lines = q"[4 5
-//1 2 10
-//1 2 1000
-//2 3 10000
-//2 3 100000
-//3 1 200000
-//4
-//1 0
-//2 10000
-//3 100000
-//4 0]";
+void main() {
+  //string lines;
+  //string buf;
+  //while (!stdin.eof) {
+  //  buf = stdin.readln();
+  //  lines ~= buf;
+  //}
+
+  string lines = q"[4 5
+1 2 10
+1 2 1000
+2 3 10000
+2 3 100000
+3 1 200000
+4
+1 0
+2 10000
+3 100000
+4 0]";
 
   string[] array = splitLines(lines);
 
-  int N = array[0].split(" ")[0].to!int;
-  int M = array[0].split(" ")[1].to!int;
+  int N,M;
+  stringsTo(array[0], N, M);
+
   int Q = array[M+1].to!int;
 
   //writef("N:%d, M:%d, Q:%d\n", N, M, Q);
@@ -77,15 +86,12 @@ void main() {
 
   foreach (int i, string s ; array[M+2..M+2+Q]) {
     //writef("v&w => [%d] %s\n", i, s);
-    v[i] = s.split(" ")[0].to!int;
-    w[i] = s.split(" ")[1].to!int;
+    stringsTo(s, v[i], w[i]);
   }
 
   foreach (int i, string s ; array[1..M+1]) {
     //writef("a,b,y => [%d] %s\n", i, s);
-    a[i] = s.split(" ")[0].to!int;
-    b[i] = s.split(" ")[1].to!int;
-    y[i] = s.split(" ")[2].to!int;
+    stringsTo(s, a[i], b[i], y[i]);
   }
 
   auto uf = new UnionFind;
@@ -122,6 +128,5 @@ void main() {
       }
     }
     writeln(count);
-    //writeln("------");
   }
 }
