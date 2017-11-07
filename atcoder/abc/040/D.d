@@ -53,17 +53,15 @@ void main() {
   //  lines ~= buf;
   //}
 
-  string lines = q"[4 5
-1 2 10
-1 2 1000
-2 3 10000
-2 3 100000
-3 1 200000
-4
-1 0
-2 10000
-3 100000
-4 0]";
+  string lines = q"[5 4
+1 2 2000
+2 3 2004
+3 4 1999
+4 5 2001
+3
+1 2000
+1 1999
+3 1995]";
 
   string[] array = splitLines(lines);
 
@@ -72,61 +70,85 @@ void main() {
 
   int Q = array[M+1].to!int;
 
-  //writef("N:%d, M:%d, Q:%d\n", N, M, Q);
+  class Edge {
+    int a;
+    int b;
+    int y;
 
-  int[] a = new int[M];
-  int[] b = new int[M];
-  int[] y = new int[M];
-
-  int[] v = new int[Q];
-  int[] w = new int[Q];
-
-  //writef("v length: %d\n", v.length);
-  //writef("a length: %d\n", a.length);
-
-  foreach (int i, string s ; array[M+2..M+2+Q]) {
-    //writef("v&w => [%d] %s\n", i, s);
-    stringsTo(s, v[i], w[i]);
+    override string toString() {
+      return format("a = %d, b = %d, y = %d", a, b, y);
+    }
   }
+
+  auto edges = new Edge[M];
 
   foreach (int i, string s ; array[1..M+1]) {
-    //writef("a,b,y => [%d] %s\n", i, s);
-    stringsTo(s, a[i], b[i], y[i]);
+    auto e = new Edge;
+    stringsTo(s, e.a, e.b, e.y);
+    edges[i] = e;
   }
+
+  class Person {
+    int v;
+    int w;
+    int count;
+
+    override string toString() {
+      return format("v = %d, w = %d, count = %d", v, w, count);
+    }
+  }
+
+  auto persons = new Person[Q];
+  foreach (int i, string s ; array[M+2..M+2+Q]) {
+    auto p = new Person;
+    stringsTo(s, p.v, p.w);
+    persons[i] = p;
+  }
+
+  // ソートしておく
+  //foreach (Person p; persons) {
+  //  writeln(p.to!string);
+  //}
+
+  sort!((Person p1, Person p2){ return p1.w > p2.w; })(persons);
+
+  //foreach (Person p; persons) {
+  //  writeln(p.to!string);
+  //}
 
   auto uf = new UnionFind;
 
-  for (int i = 0; i < Q; i++) {
-    int[] id = N.iota.array;
-    int[] sn = N.iota.array;
-    //writef("%d times \n", i);
-
-    int maxY = w[i];
-
-    foreach (int idx, int year; y) {
-      //writef("compare: maxY = %d, year = %d\n", maxY, year);
-      if (maxY < year) {
-	//writef("maxY %d < year %d\n", maxY, year);
-
-	int max = max(a[idx], b[idx]) - 1;
-	int min = min(a[idx], b[idx]) - 1;
-
-	//writef("unite: int p = %d, int q = %d\n", min, max);
-        uf.unite(min, max, id);
-      }
-    }
-
-    int count = 0;
-    foreach (int idx, int s; sn) {
-      //writef("union find string => %s \n", id.to!string);
-      //writef("s = %d, v[i]-1 = %d, is same? ", s, v[i]-1);
-      if (uf.isSame(s, v[i]-1, id)) {
-	//writeln("true");
-        count++;
-      } else {
-	//writeln("false");
-      }
-    }
-    writeln(count);
-  }
+  // for (int i = 0; i < Q; i++) {
+  //   int[] id = N.iota.array;
+  //   int[] sn = N.iota.array;
+  //   //writef("%d times \n", i);
+  //
+  //   int maxY = w[i];
+  //
+  //   foreach (int idx, int year; y) {
+  //     //writef("compare: maxY = %d, year = %d\n", maxY, year);
+  //     if (maxY < year) {
+  //       //writef("maxY %d < year %d\n", maxY, year);
+  //
+  //       int max = max(a[idx], b[idx]) - 1;
+  //       int min = min(a[idx], b[idx]) - 1;
+  //
+  //       //writef("unite: int p = %d, int q = %d\n", min, max);
+  //       uf.unite(min, max, id);
+  //     }
+  //   }
+  //
+  //   int count = 0;
+  //   foreach (int idx, int s; sn) {
+  //     //writef("union find string => %s \n", id.to!string);
+  //     //writef("s = %d, v[i]-1 = %d, is same? ", s, v[i]-1);
+  //     if (uf.isSame(s, v[i]-1, id)) {
+  //       //writeln("true");
+  //       count++;
+  //     } else {
+  //       //writeln("false");
+  //     }
+  //   }
+  //   writeln(count);
+  // }
 }
