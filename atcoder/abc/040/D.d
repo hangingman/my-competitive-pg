@@ -77,9 +77,10 @@ void main() {
     int a;
     int b;
     int y;
+    bool append;
 
     override string toString() {
-      return format("index = %d, a = %d, b = %d, y = %d", index, a, b, y);
+      return format("index = %d, a = %d, b = %d, y = %d, append = %s", index, a, b, y, append);
     }
   }
 
@@ -123,12 +124,13 @@ void main() {
     if ( edges.count!(e => e.y > p.w) == 0 ) {
       continue;
     } else {
-      auto es = edges.filter!(e => p.w < e.y);
+      auto es = edges.filter!(e => p.w < e.y && !e.append);
       foreach (ref Edge e; es) {
 	//writef("add edge %d\n", e.y);
 	int max = max(e.a, e.b) - 1;
 	int min = min(e.a, e.b) - 1;
 	uf.unite(min, max, id);
+	e.append = true;
       }
       int count = 0;
       foreach (int idx, int s; sn) {
