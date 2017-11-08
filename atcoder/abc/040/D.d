@@ -139,8 +139,9 @@ void main() {
   sort!((Edge e1, Edge e2){ return e1.y > e2.y; })(edges);
   sort!((Person p1, Person p2){ return p1.w > p2.w; })(persons);
 
-  auto uf = new UnionFind(N);
-  int[] sn = N.iota.array;
+  auto uf   = new UnionFind(N);
+  int[] ans = new int[Q];
+  ans[]     = 1;
 
   foreach (ref Person p; persons) {
     if ( edges.count!(e => e.y > p.w) == 0 ) {
@@ -157,17 +158,10 @@ void main() {
 
       // union-by-size
       int count = uf.countNodes[uf.findSet(p.v-1)];
-      p.count = count;
+      ans[p.index] = count;
       //writef("check count %d\n", p.count);
     }
   }
 
-  sort!((Person p1, Person p2){ return p1.index < p2.index; })(persons);
-  foreach (Person p; persons) {
-    if (p.count == -1) {
-      writeln(1);
-    } else {
-      writeln(p.count);
-    }
-  }
+  ans.each!(a => writeln(a));
 }
