@@ -9,18 +9,27 @@ import std.array;
 
 class UnionFind {
 
-  int root(int i, int[] id) {
-    //writef("root: int i = %d, int[] id = %s\n", i, id.to!string);
-    while (i != id[i]) {
-      i = id[i];
+  int[] id;
+  int[] rank;
+
+  this(int n) {
+    id   = n.iota.array;
+    rank = new int[n];
+    rank[] = 0;
+  }
+
+  int findSet(int i) {
+    //writef("findSet: int i = %d, int[] id = %s\n", i, id.to!string);
+    if (i != id[i]) {
+      id[i] = findSet(id[i]);
     }
-    return i;
+    return id[i];
   }
 
   // find, check if p and q has the same root
-  bool isSame(int p, int q, int[] id) {
-    int rootP = root(p, id);
-    int rootQ = root(q, id);
+  bool isSame(int p, int q) {
+    int rootP = findSet(p);
+    int rootQ = findSet(q);
     //writef("isSame: int p = %d, int q = %d\n", p, q);
     //writef(" => rootP = %d, rootQ = %d\n", rootP, rootQ);
     return rootP == rootQ;
@@ -28,10 +37,10 @@ class UnionFind {
 
   // union, to merge components containing p and q
   // set id of p's root to the id of q's root
-  void unite(int p, int q, int[] id) {
+  void unite(int p, int q) {
     //writef("unite: int p = %d, int q = %d\n", p, q);
-    int i = root(p, id);
-    int j = root(q, id);
+    int i = findSet(p);
+    int j = findSet(q);
     id[i] = j;
   }
 }
@@ -116,8 +125,7 @@ void main() {
   sort!((Edge e1, Edge e2){ return e1.y > e2.y; })(edges);
   sort!((Person p1, Person p2){ return p1.w > p2.w; })(persons);
 
-  auto uf = new UnionFind;
-  int[] id = N.iota.array;
+  auto uf = new UnionFind(N);
   int[] sn = N.iota.array;
 
   foreach (ref Person p; persons) {
@@ -129,12 +137,12 @@ void main() {
 	//writef("add edge %d\n", e.y);
 	int max = max(e.a, e.b) - 1;
 	int min = min(e.a, e.b) - 1;
-	uf.unite(min, max, id);
+	uf.unite(min, max);
 	e.append = true;
       }
       int count = 0;
       foreach (int idx, int s; sn) {
-        if (uf.isSame(s, p.v-1, id)) {
+        if (uf.isSame(s, p.v-1)) {
           count++;
         }
       }
