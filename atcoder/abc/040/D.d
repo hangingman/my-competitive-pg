@@ -11,11 +11,14 @@ class UnionFind {
 
   int[] id;
   int[] rank;
+  int[] countNodes;
 
   this(int n) {
-    id   = n.iota.array;
-    rank = new int[n];
-    rank[] = 0;
+    id           = n.iota.array;
+    rank         = new int[n];
+    rank[]       = 0;
+    countNodes   = new int[n];
+    countNodes[] = 1;
   }
 
   int findSet(int i) {
@@ -41,7 +44,18 @@ class UnionFind {
     //writef("unite: int p = %d, int q = %d\n", p, q);
     int i = findSet(p);
     int j = findSet(q);
-    id[i] = j;
+
+    if (i == j) {
+      return;
+    }
+
+    if (countNodes[i] > countNodes[j]) {
+      countNodes[i] = countNodes[j] + countNodes[i];
+      id[j] = i;
+    } else {
+      countNodes[j] = countNodes[j] + countNodes[i];
+      id[i] = j;      
+    }
   }
 }
 
@@ -140,12 +154,9 @@ void main() {
 	uf.unite(min, max);
 	e.append = true;
       }
-      int count = 0;
-      foreach (int idx, int s; sn) {
-        if (uf.isSame(s, p.v-1)) {
-          count++;
-        }
-      }
+
+      // union-by-size
+      int count = uf.countNodes[uf.findSet(p.v-1)];
       p.count = count;
       //writef("check count %d\n", p.count);
     }
