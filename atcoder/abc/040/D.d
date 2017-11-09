@@ -7,6 +7,9 @@ import std.algorithm;
 import std.range : iota;
 import std.array;
 
+import std.container;
+import std.typetuple, std.typecons;
+
 class UnionFind {
 
   int[] id;
@@ -54,7 +57,7 @@ class UnionFind {
       id[j] = i;
     } else {
       countNodes[j] = countNodes[j] + countNodes[i];
-      id[i] = j;      
+      id[i] = j;
     }
   }
 }
@@ -67,6 +70,9 @@ void stringsTo(string, T...)(string str, ref T t) {
     s = s[1..$];
   }
 }
+
+alias Edge   = Tuple!(int, "index", int, "a", int, "b", int, "y");
+alias Person = Tuple!(int, "index", int, "v", int, "w", int, "count");
 
 void main() {
   string lines;
@@ -94,74 +100,41 @@ void main() {
   stringsTo(array[0], N, M);
 
   int Q = array[M+1].to!int;
-
-  class Edge {
-    int index;
-    int a;
-    int b;
-    int y;
-    bool append;
-
-    override string toString() {
-      return format("index = %d, a = %d, b = %d, y = %d, append = %s", index, a, b, y, append);
-    }
-  }
-
-  auto edges = new Edge[M];
+  auto edges   = new BinaryHeap!(Array!Edge, "a.y < b.y")();
+  auto persons = new BinaryHeap!(Array!Person, "a.w < b.w")();
 
   foreach (int i, string s ; array[1..M+1]) {
-    auto e = new Edge;
-    e.index = i;
-    stringsTo(s, e.a, e.b, e.y);
-    edges[i] = e;
+    int a,b,y;
+    stringsTo(s, a, b, y);
+    edges.insert(Edge(i, a, b, y));
   }
 
-  class Person {
-    int index;
-    int v;
-    int w;
-    int count;
-
-    override string toString() {
-      return format("index = %d, v = %d, w = %d, count = %d", index, v, w, count);
-    }
-  }
-
-  auto persons = new Person[Q];
   foreach (int i, string s ; array[M+2..M+2+Q]) {
-    auto p = new Person;
-    p.index = i;
-    p.count = -1;
-    stringsTo(s, p.v, p.w);
-    persons[i] = p;
+    int v,w;
+    stringsTo(s, v, w);
+    persons.insert(Person(i, v, w, -1));
   }
-
-  sort!((Edge e1, Edge e2){ return e1.y > e2.y; })(edges);
-  sort!((Person p1, Person p2){ return p1.w > p2.w; })(persons);
 
   auto uf   = new UnionFind(N);
   int[] ans = new int[Q];
   ans[]     = 1;
 
-  foreach (ref Person p; persons) {
-    if ( edges.count!(e => e.y > p.w) == 0 ) {
-      continue;
-    } else {
-      auto es = edges.filter!(e => p.w < e.y && !e.append);
-      foreach (ref Edge e; es) {
-	//writef("add edge %d\n", e.y);
-	int max = max(e.a, e.b) - 1;
-	int min = min(e.a, e.b) - 1;
-	uf.unite(min, max);
-	e.append = true;
-      }
+  while (!persons.empty) {
+    Person p = persons.front();
 
-      // union-by-size
-      int count = uf.countNodes[uf.findSet(p.v-1)];
-      ans[p.index] = count;
-      //writef("check count %d\n", p.count);
+    while(!edges.empty && edges.front.y > p.w) {
+      auto e = edges.front();
+      int max = max(e.a, e.b) - 1;
+      int min = min(e.a, e.b) - 1;
+      uf.unite(min, max);
+      edges.removeFront();
+      if (edges.empty()) {break;}
     }
+    // union-by-size
+    int count    = uf.countNodes[uf.findSet(p.v-1)];
+    ans[p.index] = count;
+    persons.removeFront();
+    //writef("check count %d\n", p.count);
   }
-
   ans.each!(a => writeln(a));
 }
