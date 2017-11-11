@@ -1,5 +1,5 @@
 lines = <<'EOS'
-10 2
+100 5
 EOS
 
 #lines = $stdin.read
@@ -7,15 +7,9 @@ array = lines.split("\n")
 
 N,M = array[0].split(" ").map(&:to_i)
 
-time = 0
+# E = 1/p
+# p = 1/2^M
+_2m = 2**M
+time = _2m * 1900*M + _2m * 100 * (N-M)
 
-time += 1900*2*M
-
-puts time
-
-time += 100*(N-M)
-
-puts 100*(N-M)
-
-puts "+---"
 puts time
