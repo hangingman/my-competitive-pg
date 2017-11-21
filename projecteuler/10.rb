@@ -9,7 +9,7 @@ def erastosthenes(n)
   array
 end
 
-PN = erastosthenes(1000000)
+PN = erastosthenes(2000000)
 
 puts PN.length
-puts PN[10000]
+puts PN.inject(:+)
