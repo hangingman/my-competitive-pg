@@ -12,7 +12,7 @@
 ### atcoder(AtCoder)
 
 * [AtCoder](https://atcoder.jp/)
-    * [AtCoderで解いた問題の履歴](http://kenkoooo.com/atcoder/?name=hiroyuking&rivals=&kind=index)
+    * [AtCoderで解いた問題の履歴](http://beta.kenkoooo.com/atcoder/?user=hiroyuking)
 
 ### kattis(Kattis)
 
