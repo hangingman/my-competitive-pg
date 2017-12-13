@@ -1,41 +1,37 @@
 lines = <<'EOS'
-3 4
-1 3 2
-3 4 4
-1 4 3
+3 2
+1 7 2
+7 8 1
+8 12 1
 EOS
 
 #lines = $stdin.read
 array = lines.split("\n")
 
+TIME = 10**5
+
 N,C = array[0].split(" ").map(&:to_i)
 
-sr = array[1..N].map.with_index do |time,i|
-  s,t,c = time.split(" ").map(&:to_i)
+mat = Array.new(C).map{Array.new(TIME, 0)}
 
-  blank  = 0.step(s-0.5, 0.5).to_a.map{|n| 0}
-  record = s.step(t, 0.5).to_a.map{|n| 1}
-  blank.concat(record)
+array[1..array.length].each do |rec|
+  s,e,c = rec.split(" ").map(&:to_i)
+  mat[c-1][s] += 1
+  mat[c-1][e+1] -= 1
 end
 
-max_length = 0
+#p mat
 
-for i in 0...sr.length
-  len = sr[i].length
-  max_length = len if len >= max_length
-end
-
-table = Array.new(max_length, 0)
-
-puts sr[0].to_s
-puts sr[1].to_s
-puts sr[2].to_s
-
-for sr_idx in 0..max_length
-  table[sr_idx] = 0
-  for idx in 0...sr.length
-    table[sr_idx] += sr[idx]
+mat.map! do |rec|
+  rec.map.reduce([]) do |acc, e|
+    acc << (acc == [] ? e : acc.last + e)
   end
 end
 
-puts table.to_s
+#mat.each{|rec| puts rec.to_s}
+
+add_mat = mat.transpose.map{|a| a.inject(:+) }
+
+#p add_mat
+
+puts add_mat.max
