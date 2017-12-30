@@ -1,25 +1,39 @@
 lines = <<'EOS'
-267 294 165
+17 2 34
 EOS
 
 #lines = $stdin.read
 array = lines.split("\n")
 
-def marble(n)
-  (n**2 / 4).floor
+R,G,B = array[0].split(" ").map(&:to_i)
+INF   = 1 << 25
+
+dp  = Array.new(2001).map{ Array.new(903, 0) }
+sum = 0
+sum = R+G+B
+
+# for i in 0..2000
+#   for j in 0..sum+1
+#     dp[i][j] = 0
+#   end
+# end
+
+for i in 1..2000
+  for j in 1..sum+1
+    marble = 0
+
+    if j <= R
+      marble = (i-900).abs
+    elsif j <= R+G
+      marble = (i-1000).abs
+    else
+      marble = (i-1100).abs
+    end
+
+    #puts "dp[#{i}][#{j}], marble=#{marble}"
+
+    dp[i][j] = [ dp[i - 1][j - 1] + marble, dp[i - 1][j] ].min
+  end
 end
 
-R,G,B = array[0].split(" ").map(&:to_i)
-# puts marble(R) + marble(G) + marble(B)
-
-cusum = Array.new(800){0}
-
-# index[-100] = 300
-# index[   0] = 400
-# index[+100] = 500
-
-puts "R/2 = #{R/2}, [l, r] = [#{300 - (R/2)}, #{300 + (R/2)}]"
-puts "G/2 = #{G/2}, [l, r] = [#{400 - (G/2)}, #{400 + (G/2)}]"
-puts "B/2 = #{B/2}, [l, r] = [#{500 - (B/2)}, #{500 + (B/2)}]"
-
-# p cusum
+puts dp.max
