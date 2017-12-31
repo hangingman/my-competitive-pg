@@ -10,19 +10,15 @@ def coin(amount,kind,coins)
 
   for i in 1..kind
     for j in 1..amount
-      if i == 1
-        dp[i][j] = (j % coins[i] == 0) ? 1 : 0
-      else
-        # coins[i]を１枚使う方法
-        first = dp[i][j - coins[i]]
-        # coins[i]を０枚使う方法
-        second = dp[i-1][j]
+      # coins[i]を１枚使う方法
+      first = dp[i][j - coins[i]]
+      # coins[i]を０枚使う方法
+      second = dp[i-1][j]
 
-        puts "N = #{j}"
-        puts "#{coins[i]} を１枚使う方法 => #{first}"
-        puts "#{coins[i]} を０枚使う方法 => #{second}"
-        dp[i][j] = first + second
-      end
+      puts "N = #{j}"
+      puts "#{coins[i]} を１枚使う方法 => #{first}"
+      puts "#{coins[i]} を０枚使う方法 => #{second}"
+      dp[i][j] = first + second
     end
   end
   dp
