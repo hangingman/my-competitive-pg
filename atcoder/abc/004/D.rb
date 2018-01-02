@@ -1,3 +1,4 @@
+# coding: utf-8
 lines = <<'EOS'
 17 2 34
 EOS
@@ -7,33 +8,46 @@ array = lines.split("\n")
 
 R,G,B = array[0].split(" ").map(&:to_i)
 INF   = 1 << 25
+dp    = Array.new(1000).map{ Array.new(1000, 0) }
+total = R+G+B
 
-dp  = Array.new(2001).map{ Array.new(903, 0) }
-sum = 0
-sum = R+G+B
-
-# for i in 0..2000
-#   for j in 0..sum+1
-#     dp[i][j] = 0
-#   end
-# end
-
-for i in 1..2000
-  for j in 1..sum+1
-    marble = 0
-
-    if j <= R
-      marble = (i-900).abs
-    elsif j <= R+G
-      marble = (i-1000).abs
-    else
-      marble = (i-1100).abs
-    end
-
-    #puts "dp[#{i}][#{j}], marble=#{marble}"
-
-    dp[i][j] = [ dp[i - 1][j - 1] + marble, dp[i - 1][j] ].min
+def cost(pos, remain)
+  if remain >= G+B
+    (400-pos).abs
+  elsif remain >= B
+    (500-pos).abs
+  else
+    (600-pos).abs
   end
 end
 
-puts dp.max
+for i in 0...1000
+  for j in 0...1000
+    dp[i][j] = INF
+  end
+end
+for i in 0...1000
+  dp[i][total] = 0
+end
+
+for i in 1...1000
+  for j in 0...total
+    dp[i][j] = [ dp[i-1][j], dp[i-1][j+1] + cost(i,j) ].min
+  end
+  t = dp[i].take(total).map do |e|
+    e = if e == INF
+          "I"
+        else
+          e
+        end
+    e
+  end
+  p t
+end
+
+ans = INF
+for i in 0...1000
+  ans = [ans, dp[i][0]].min
+end
+
+puts ans
