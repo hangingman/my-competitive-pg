@@ -10,6 +10,3 @@ def erastosthenes(n)
 end
 
 PN = erastosthenes(1000000)
-
-puts PN.length
-puts PN[10000]
