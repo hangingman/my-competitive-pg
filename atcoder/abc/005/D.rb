@@ -27,19 +27,33 @@ dp = Array.new(I).map{
   }
 }
 
+max_v = {}
+
 for i in 0..N-1
   for j in 0..N-1
     dp[i][j][0][0] = D[i][j]
+    max_v[1] = dp[i][j][0][0] if max_v[1].to_i < dp[i][j][0][0]
   end
 end
 
 for i in 0..N-1
   for j in 0..N-1
     for h in 1..N-1
-      # p dp[i][j][0][h-1]
-      # p dp[i+h][j][0][0]
       dp[i][j][0][h] = dp[i][j][0][h-1] + dp[i+h][j][0][0] rescue 0
-      puts "dp[#{i}][#{j}][0][#{h}] = #{dp[i][j][0][h]}"
+      # puts "dp[#{i}][#{j}][0][#{h}] = #{dp[i][j][0][h]}"
+    end
+  end
+end
+
+
+for i in 0..N-1
+  for j in 0..N-1
+    for h in 1..N-1
+      for w in 1..N-1
+        dp[i][j][w][h] = dp[i][j][w-1][h] + dp[i][j+w][0][h] rescue 0
+        # max_v[w*h] = dp[i][j][w][h] if max_v[w*h].to_i < dp[i][j][w][h]
+        # puts "dp[#{i}][#{j}][#{w}][#{h}] = #{dp[i][j][w][h]}"
+      end
     end
   end
 end
