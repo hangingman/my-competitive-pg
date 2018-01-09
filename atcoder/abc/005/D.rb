@@ -1,12 +1,10 @@
 lines = <<'EOS'
 3
-3 2 1
-2 2 1
 1 1 1
-3
+1 1 1
+9 9 9
 1
 4
-9
 EOS
 
 #lines = $stdin.read
@@ -38,9 +36,10 @@ end
 
 for i in 0..N-1
   for j in 0..N-1
-    for h in 1..N-1
-      dp[i][j][0][h] = dp[i][j][0][h-1] + dp[i+h][j][0][0] rescue 0
-      # puts "dp[#{i}][#{j}][0][#{h}] = #{dp[i][j][0][h]}"
+    for h in 1...N-i
+      dp[i][j][0][h] = dp[i][j][0][h-1] + dp[i+h][j][0][0]
+      max_v[h+1] = dp[i][j][0][h] if max_v[h+1].to_i < dp[i][j][0][h]
+      puts "dp[#{i}][#{j}][0][#{h}] = #{dp[i][j][0][h]}"
     end
   end
 end
@@ -48,12 +47,16 @@ end
 
 for i in 0..N-1
   for j in 0..N-1
-    for h in 1..N-1
-      for w in 1..N-1
-        dp[i][j][w][h] = dp[i][j][w-1][h] + dp[i][j+w][0][h] rescue 0
-        # max_v[w*h] = dp[i][j][w][h] if max_v[w*h].to_i < dp[i][j][w][h]
-        # puts "dp[#{i}][#{j}][#{w}][#{h}] = #{dp[i][j][w][h]}"
+    for h in 1...N-i
+      for w in 1...N-j
+        dp[i][j][w][h] = dp[i][j][w-1][h] + dp[i][j+w][0][h]
+        max_v[(w+1)*(h+1)] = dp[i][j][w][h].to_i if max_v[(w+1)*(h+1)].to_i < dp[i][j][w][h].to_i
+        puts "dp[#{i}][#{j}][#{w}][#{h}] = #{dp[i][j][w][h]}"
       end
     end
   end
 end
+
+p max_v
+
+P.each{|ps| puts max_v[ps]}
