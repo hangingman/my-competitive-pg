@@ -8,41 +8,42 @@ lines = <<'EOS'
 3 7 9 1 2 7
 EOS
 
+#
+# very sorry, hatovalley
+# https://beta.atcoder.jp/contests/abc037/submissions/1497549
+
 lines = $stdin.read
 array = lines.split("\n")
 H,W   = array[0].split(" ").map(&:to_i)
-A     = array[1..H+1].map{|s| s.split(" ").map(&:to_i)}
 
-#require 'matrix'
-#dp = Matrix.build(H,W){|row,col| 0}.to_a
-dp = Array.new(H).map{Array.new(W){0}}
+# add empty areas around the matrix
+A = [Array.new(W+2, 0)]
+H.times do |r|
+  A << [0] + array[1+r].split(" ").map(&:to_i) + [0]
+end
+A << Array.new(W+2, 0)
 
-def rec(dp,i,j,sq,h,w)
-  #puts "i=#{i},j=#{j},h=#{h},w=#{w}"
-  if dp[i][j] == 0
-    ans = 1
-    if i > 0 and sq[i][j] < sq[i-1][j]
-      ans += rec(dp,i-1,j,sq,h,w) # up
-    end
-    if i < h-1 and sq[i][j] < sq[i+1][j]
-      ans += rec(dp,i+1,j,sq,h,w) # down
-    end
-    if j > 0 and sq[i][j] < sq[i][j-1]
-      ans += rec(dp,i,j-1,sq,h,w) # left
-    end
-    if j < w-1 and sq[i][j] < sq[i][j+1]
-      ans += rec(dp,i,j+1,sq,h,w) # right
-    end
-    ans
-  else
-    dp[i][j]
+MOD = 10**9+7
+
+dp = Array.new(H + 2) do |i|
+  Hash.new do |h, j|
+    v = A[i][j]
+    u = A[i + 1][j] > v ? dp[i + 1][j] : 0
+    d = A[i - 1][j] > v ? dp[i - 1][j] : 0
+    r = A[i][j + 1] > v ? dp[i][j + 1] : 0
+    l = A[i][j - 1] > v ? dp[i][j - 1] : 0
+    h[j] = (u + d + r + l + 1) % MOD
   end
 end
 
-for i in 0...H
-  for j in 0...W
-    dp[i][j] = rec(dp,i,j,A,H,W)
+ans = 0
+
+for i in 1..H
+  for j in 1..W
+    #puts "dp[#{i}][#{j}] = #{dp[i][j]}"
+    ans += dp[i][j]
   end
+  ans %= MOD
 end
 
-puts dp.inject(&:+).inject(&:+)
+puts ans
