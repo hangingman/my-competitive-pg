@@ -44,8 +44,5 @@ end
 test1 = Array.new(3).map{Array.new(3,0)}
 test1 = [[1,1,1],[0,0,0],[0,0,0]]
 
-p test1
-
-p sum(imos_2d(test1),0,0,0,0)
-
-p sum(imos_2d(test1),0,0,3,3)
+s = imos_2d(test1)
+p s
