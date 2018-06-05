@@ -23,30 +23,4 @@ EOT
 
 cp ${contest}/${number}/A.rb ${contest}/${number}/B.rb
 cp ${contest}/${number}/A.rb ${contest}/${number}/C.rb
-
-# create dlang template files
-cat << EOT > ${contest}/${number}/D.d
-import std.stdio;
-import std.conv;
-import std.string;
-import std.format;
-import std.algorithm;
-
-void main()
-{
-
-  //string lines;
-  //string buf;
-  //
-  //while (!stdin.eof) {
-  //  buf = stdin.readln();
-  //  lines ~= buf;
-  //}
-
-  string lines = q"[
-  ]";
-
-  string[] array = splitLines(lines);
-  writeln(to!string(array));
-}
-EOT
+cp ${contest}/${number}/A.rb ${contest}/${number}/D.rb
