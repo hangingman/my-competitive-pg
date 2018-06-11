@@ -22,4 +22,4 @@
 
 * 競技プログラミングの学習体系化の試みです
 
-![algorithm-diagram](https://github.com/Hiroyuki-Nagata/my-competitive-pg/blob/master/Untitled%20Diagram.png)
+![algorithm-diagram](https://github.com/Hiroyuki-Nagata/my-competitive-pg/blob/master/Algorithm_Hierarchy.png)
