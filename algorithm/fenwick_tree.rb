@@ -5,22 +5,24 @@
 #* each of which starts and ends at random indices.                */
 #*******************************************************************/
 class FenwickTree
-  attr_accessor :size, :array, :bit
+  attr_accessor :n, :array, :bit
 
-  def initialize()
-    @size = 1<<10
-    @array = (1..@size+1).to_a
-    @bit = Array.new(@size+1, 0)
-    @array.each_with_index{|e,i| add(i+1, e)}
+  def initialize(n, array)
+    @n = n
+    @bit = Array.new(@n+1, 0)
+    @array = array.dup
+    for i in 0..n
+      add(i,@array[i])
+    end
   end
 
-  def sum(a)
-    # return the sum of the first i elements, 0 through i-1.
+  def sum(idx)
     ans = 0
-    while a
-      ans += @bit[a]
-      least = a&-a
-      a-=least
+    idx += 1
+    while not idx.zero?
+      ans += @bit[idx]
+      least = idx&-idx
+      idx -= least
     end
     ans
   end
@@ -33,35 +35,18 @@ class FenwickTree
     end
   end
 
-  def add(a, x)
-    while a <= @size
-      @bit[a] += x
-      least = a&-a
-      a += least
+  def add(idx, x)
+    idx += 1
+    while idx <= @n
+      @bit[idx] += x
+      least = idx&-idx
+      idx += least
     end
   end
 end
 
-# start
-lines = <<'EOS'
-3 5
-0 1 1
-0 2 2
-0 3 3
-1 1 2
-1 2 2
-EOS
+array = [2, 1, 1, 3, 2, 3, 4, 5, 6, 7, 8, 9]
+ft = FenwickTree.new(array.length, array)
 
-ft = FenwickTree.new
-
-#lines = $stdin.read
-array = lines.split("\n")
-
-array.drop(1).each do |line|
-  q,x,y = line.split(" ").map(&:to_i)
-  if q == 0
-    ft.add(x, y)
-  else
-    puts ft.range(x, y)
-  end
-end
+p ft.bit
+puts ft.sum(5)
