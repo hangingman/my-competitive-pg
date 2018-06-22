@@ -42,12 +42,9 @@ class FenwickTree
   end
 
   def add(idx, x)
-    #puts "add idx=#{idx} := #{x}"
     idx += 1
     while idx <= @n
       @bit[idx] += x
-      #puts "@bit[#{idx}] += #{x} == #{@bit[idx]}"
-      #p @bit
       least = idx&-idx
       idx += least
     end
@@ -56,7 +53,6 @@ class FenwickTree
   def lower_bound(w)
     idx,mask = 0,@n2
     while mask != 0
-      #puts "idx=#{idx},mask=#{mask}"
       tidx = idx + mask
       if w >= @bit[tidx]
         idx = tidx
@@ -66,13 +62,45 @@ class FenwickTree
     end
     idx
   end
+
+  def lsb(n)
+    n&-n
+  end
+
+  # left
+  def parent_l(n)
+    n -= lsb(n)
+    n
+  end
+
+  # right
+  def parent_r(n)
+    n += lsb(n)
+    n
+  end
+
+  def min(l,r)
+    puts "#{l} to #{r}"
+    val = Float::INFINITY
+    i = l
+    while parent_r(i) <= r
+      val = [val, @bit[i]].min
+      i = parent_r(i)
+    end
+    i = r
+    while parent_l(i) >= l
+      val = [val, @bit[i]].min
+      i = parent_l(i)
+    end
+    val = [val, @array[i]].min
+    val
+  end
 end
 
-array  = [5,3,7,9,6,4,1,2,0,0,0,0,0,0,0,0]
-#array = [0,2,0,1,1,1,0,4,4,0,1,0,1,2,3,0]
+array = [1,0,2,1,1,3,0,4,2,5,2,2,3,1,0]
 ft = FenwickTree.new(array.length, array)
 
-b = ft.bit.dup
+b = [0].concat(ft.array).dup
 
 tree_v = <<EOS
                            ８(#{b[8]})
@@ -89,5 +117,17 @@ tree_v = <<EOS
  ０  １      ３  ５      ７  ９      11  13      15
 (#{b[0]}) (#{b[1]})     (#{b[3]}) (#{b[5]})    (#{b[7]}) (#{b[9]})     (#{b[11]}) (#{b[13]})     (#{b[5]})
 EOS
+
+#puts tree_v
+
+#         1,2,3,4,5,6,7,8,9,a,b,c,d,e,f
+#array = [1,0,2,1,1,3,0,4,2,5,2,2,3,1,0]
+
+# 1-indexed
+#l,r = 2,7
+#l,r = 3,6
+l,r = 9,11
+puts "min = #{ft.min(l,r)}"
+puts "summary = #{ft.array[l-1,r-l+1]}"
 
 puts tree_v
