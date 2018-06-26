@@ -8,9 +8,8 @@ class FenwickTree
       n2 <<= 1
     end
     @n2 = n2
-    @left = Array.new(@n+1, 0)
-    @right = Array.new(@n+1, 0)
-
+    @left = Array.new(@n2, 0)
+    @right = Array.new(@n2, 0)
     @array = array.dup
     for i in 0...n
       add(i+1,@array[i])
@@ -18,19 +17,20 @@ class FenwickTree
   end
 
   def G(x)
-    x - (x & (x-1))
+    ans = x - (x & (x-1))
+    #puts "G(#{x}) = #{ans}"
+    ans
   end
 
   def add(idx, x)
     @array[idx-1]=x
     i=idx
-    while i<=@n2
-      break if i>@n
+    while i<=@n2 and i<@left.length
       @left[i] = [@left[i],x].max
       i=i+G(i)
     end
     i=idx
-    while i>0
+    while i>0 and i<@right.length
       @right[i] = [@right[i],x].max
       i=i-G(i)
     end
@@ -55,13 +55,16 @@ class FenwickTree
     end
     ans
   end
+
 end
 
 lines = <<'EOS'
-3
-3 3
-1 1
+5
+8 8
+5 3
 2 2
+4 2
+2 1
 EOS
 
 #lines = $stdin.read
@@ -76,12 +79,19 @@ end.sort_by do |e|
 end.map{|m| m.values}.flatten
 
 dp = Array.new(N, 0)
+dp[0]=1
+
 fw = FenwickTree.new(N, Array.new(N,0))
+fw.add(1, boxes[0])
 
 for i in 1...N
-  dp[i] = fw.max(1, i-1) + 1
-  fw.add(i, dp[i])
-  p dp
+  #puts "fw.max(1,#{i}) (=#{fw.max(1, i)})<= boxes[#{i}](=#{boxes[i]})"
+  if fw.max(1, i) <= boxes[i]
+    dp[i] += dp[i-1] + 1
+  else
+    dp[i] = dp[i-1]
+  end
+  fw.add(i+1, boxes[i])
 end
 
-p dp.max
+puts dp.max

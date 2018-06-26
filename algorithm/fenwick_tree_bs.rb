@@ -1,6 +1,6 @@
 # coding: utf-8
 #*******************************************************************/
-#* Add binary search method
+#* It has max function and left/right tree
 #*******************************************************************/
 class FenwickTree
   attr_accessor :n, :n2, :array, :left, :right
