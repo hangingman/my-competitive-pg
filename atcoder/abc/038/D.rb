@@ -26,9 +26,11 @@ dp = Array.new(N,INF)
 boxes.each_with_index do |m,i|
   k,v = m.first.to_a[0],m.first.to_a[1]
   idx = dp.bsearch_index do |h|
-    h > v
+    v < h+1
   end
-  dp[idx] = v unless idx.nil?
+  if not idx.nil?
+    dp[idx] = v
+  end
 end
 
 #p dp
