@@ -1,92 +1,44 @@
-def DT(where_to, n)
+# coding: utf-8
+N = 6                      # 全体の要素数
+LOG_N = Math.log2(N).floor # log2(N)
 
-  src = where_to.dup
-  dst = where_to.dup
+# next_obj[k][i]で、i番目の要素の「2^k個次の要素」を指す
+# (なお、i番目の要素に対して「2^k個次の要素」が存在しないとき、
+#  next_obj[k][i]が指し示す要素番号を-1とします)
+next_obj = Array.new(LOG_N+1).map{Array.new(N, 0)}
 
-  2.upto(n) do
-    for i in (0...src.length).to_a
-      dst[i] = src[dst[i]]
-    end
-  end
-  dst
+# next_obj[0]を計算
+for i in 0...N
+  next_obj[0][i] = (iの次の要素)
 end
 
-To = [1,2,3,4,0]
+# nextを計算
+for k in 0...LOG_N
+  for i in i...N
+    if next_obj[k][i] == -1
+      # 2^k個次に要素が無い時、当然2^(k+1)個次にも要素はありません
+      next_obj[k+1][i] = -1
+    else
+      # 「2^k個次の要素」の2^k個次の要素は、2^(k+1)個次の要素です
+      next_obj[k+1] = next_obj[k][next_obj[k][i]]
+    end
+  end
+end
 
-T1 = [
-  To[0],
-  To[1],
-  To[2],
-  To[3],
-  To[4]
-]
+# ----ここまで準備----
 
-T2 = [
-  T1[T1[0]],
-  T1[T1[1]],
-  T1[T1[2]],
-  T1[T1[3]],
-  T1[T1[4]],
-]
 
-T3 = [
-  T1[T1[T1[0]]],
-  T1[T1[T1[1]]],
-  T1[T1[T1[2]]],
-  T1[T1[T1[3]]],
-  T1[T1[T1[4]]],
-]
+# p番目の要素の「Q個次の要素」を求めることを考えます
+k = LOG_N -1
+until k >= 0
+  # pがすでに存在しない要素を指していたら、
+  # それ以降で存在する要素を指すことはないためループを抜けます
+  break if p == -1
 
-T4 = [
-  T1[T1[T1[T1[0]]]],
-  T1[T1[T1[T1[1]]]],
-  T1[T1[T1[T1[2]]]],
-  T1[T1[T1[T1[3]]]],
-  T1[T1[T1[T1[4]]]],
-]
-
-puts "-- -------------------- --"
-puts "-- Show naive pattern!! --"
-puts "-- -------------------- --"
-puts T1.to_s
-puts T2.to_s
-puts T3.to_s
-puts T4.to_s
-puts "-- -------------------- --"
-
-puts "-- -------------------- --"
-puts "-- Show doubling !      --"
-puts "-- -------------------- --"
-DT1 = DT(To.dup, 1)
-puts DT1.to_s
-DT2 = DT(To.dup, 2)
-puts DT2.to_s
-DT3 = DT(To.dup, 3)
-puts DT3.to_s
-DT4 = DT(To.dup, 4)
-puts DT4.to_s
-
-DT64 = DT(To.dup, 64)
-puts DT64.to_s
-DT121 = DT(To.dup, 121)
-puts DT121.to_s
-
-puts "-- -------------------- --"
-puts "-- Show 'magic' !       --"
-puts "-- -------------------- --"
-
-EDT1 = DT(To.dup, 1)
-puts EDT1.to_s
-EDT2 = DT(To.dup, 2)
-puts EDT2.to_s
-EDT4 = DT(EDT2.dup, 2)
-puts EDT4.to_s
-
-EDT8 = DT(EDT4.dup, 2)
-#puts EDT8.to_s
-EDT64 = DT(EDT8.dup, 8)
-#puts EDT64.to_s
-
-EDT11  = DT(To.dup, 11)
-EDT121 = DT(EDT11.dup, 11)
-puts EDT121.to_s
+  if ((Q >> k) & 1)
+    # Qを二進展開した際、k番目のビットが立っていたら、
+    # pの位置を2^kだけ次にずらします
+    p = next_obj[k][p]
+  end
+  k-=1
+end
