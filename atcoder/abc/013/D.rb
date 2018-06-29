@@ -16,7 +16,11 @@ def lsb(x)
 end
 
 N,M,Q = array[0].split(" ").map(&:to_i)
-A     = array[1].split(" ").map(&:to_i)
+A     = if M == 0
+          []
+        else
+          array[1].split(" ").map(&:to_i)
+        end
 to    = 1.upto(N).to_a
 
 for a in A.reverse
