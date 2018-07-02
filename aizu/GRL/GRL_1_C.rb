@@ -1,13 +1,23 @@
 # coding: utf-8
 
 lines = <<'EOS'
-4 6
-0 1 1
-0 2 5
-1 2 2
-1 3 4
-2 3 1
-3 2 -7
+12 16
+0 1 2
+0 3 1
+1 2 1
+1 4 2
+2 5 2
+3 4 3
+3 6 1
+4 5 10
+4 7 -3
+5 4 -7
+5 8 2
+6 7 1
+7 8 6
+9 10 1
+10 11 1
+11 9 1
 EOS
 
 #lines = $stdin.read
@@ -18,15 +28,9 @@ array = lines.split("\n")
 # :k u の出次数
 # :v u に隣接する頂点の番号
 # :w 隣接する頂点への重み
-# ---
-# :visited 深さ優先探索用
-# ---
-# 閉路の判定のため深さ優先探索も実装してみる
-#   深さ優先探索で親ノードへの戻り辺があれば、それは閉路である。トポロジカルソートでも検出できる。
-#   Wikipedia - 閉路 より
 #
-INF  = 999999999
-Node = Struct.new(:u, :k, :v, :w, :visited)
+INF  = Float::INFINITY
+Node = Struct.new(:u, :k, :v, :w)
 
 class Graph
   attr :nodes, :dist
@@ -42,7 +46,7 @@ class Graph
   def add_graph_edge(u, v, w)
     #puts "#{u} -> #{v} (#{w})"
     if @nodes[u].v.nil?
-      @nodes[u].v = v
+      @nodes[u].v = [v]
       @nodes[u].w = {v=>w}
     elsif @nodes[u].v.is_a?(Array)
       @nodes[u].v << v
@@ -63,45 +67,33 @@ class Graph
     for i in 0...@nodes.length
       for j in 0...@nodes.length
         @dist[i][j] = if not @nodes[i].w.nil? and @nodes[i].w.has_key?(j)
-                            @nodes[i].w[j]
-                          else
-                            INF
+                        @nodes[i].w[j]
+                      else
+                        INF
                       end
-        @dist[i][j] = 0 if i==j
       end
+      @dist[i][i] = 0
     end
 
     # calc
     for k in 0...@nodes.length
       for i in 0...@nodes.length
         for j in 0...@nodes.length
-          if @dist[i][j] > @dist[i][k] + @dist[k][j]
-            @dist[i][j] = @dist[i][k] + @dist[k][j]
+          if @dist[i][k] != INF and @dist[k][j] != INF
+            @dist[i][j] = [@dist[i][j], @dist[i][k] + @dist[k][j]].min
           end
         end
       end
     end
   end
 
-  def has_cycle?()
+  def has_negative_cycle?()
+    ans = false
+    for v in 0...V
+      ans = true if @dist[v][v] < 0
+    end
+    ans
   end
-
-  # def dfs(start = 0, count = 1)
-  #
-  #   # puts "visit = #{@nodes[start].to_s}, count = #{count}"
-  #   @nodes[start].visited = true
-  #   @d[start] = count
-  #   count = count + 1
-  #
-  #   for i in @nodes[start].v
-  #     count = dfs(i-1, count) unless @nodes[i-1].visited
-  #   end
-  #   # puts "visited = #{@nodes[start].to_s}, count = #{count}"
-  #
-  #   @f[start] = count
-  #   count = count + 1
-  #   count
-  # end
 end
 
 V,E = array[0].split(" ").map(&:to_i)
@@ -115,9 +107,7 @@ end
 # execute WarshallFloyd !
 graph.warshall_floyd()
 
-if graph.dist.map{|d| d.inject(&:+)}.any?{|sum| sum < 0}
-  p graph.dist
-  #p graph.dist.map{|d| d.reject()   d.inject(&:+)}
+if graph.has_negative_cycle?
   puts "NEGATIVE CYCLE"
 else
   graph.dist.each do |d|
