@@ -38,6 +38,11 @@ class UnionFind
   end
 end
 
+def get_hash_key(a, b)
+  a << 32 | b
+end
+
+
 lines = <<'EOS'
 7 4 4
 1 2
@@ -67,12 +72,22 @@ array[K+1..K+L+1].each do |str|
   ufrs.unite(ri,si)
 end
 
-ans = (1..N).map do |n|
+m = {}
+
+(1..N).each do |n|
   rpq = ufpq.root(n)
   rrs = ufrs.root(n)
-  idx_pq = ufpq.id.each_with_index.select{|e, i| e == rpq}.map{|e| e[1]}
-  idx_rs = ufrs.id.each_with_index.select{|e, i| e == rrs}.map{|e| e[1]}
-  (idx_pq & idx_rs).length
+  key = get_hash_key(rpq,rrs)
+  if m.has_key?(key)
+    m[key] += 1
+  else
+    m[key] = 1
+  end
 end
 
-puts ans.join(" ")
+(1..N).each do |n|
+  rpq = ufpq.root(n)
+  rrs = ufrs.root(n)
+  key = get_hash_key(rpq,rrs)
+  puts m[key]
+end
