@@ -16,7 +16,7 @@ EOS
 array = lines.split("\n")
 
 TIME = 10**5*2
-#TIME = 30
+#TIME = 300
 
 N,C = array[0].split(" ").map(&:to_i)
 
@@ -30,12 +30,15 @@ array[1..N+1].each do |rec|
   cumsum[c][t] -= 1
 end
 
-ans = cumsum.map! do |cumrow|
-  sum = cumrow.dup
-  for i in 1...cumrow.length
+ans = Array.new(TIME,0)
+cumsum.each do |sum|
+  for i in 1...sum.length
     sum[i] += sum[i-1]
+    ans[i] += sum[i]
   end
-  sum
-end.transpose.map{|row| row.inject(&:+)}
+  #p sum
+  #sum
+end
 
+#p ans
 puts ans.max
