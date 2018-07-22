@@ -126,22 +126,23 @@ array = lines.split("\n")
 
 N,M,R = array[0].split(" ").map(&:to_i)
 graph = Graph.new(N)
+rarr  = array[1].split(" ").map(&:to_i).map{|idx| idx-1}
 
 array[2..M+1].each do |s|
   s,t,d = s.split(" ").map(&:to_i)
-  graph.add_graph_edge(s-1,t-1,d)
-  graph.add_graph_edge(t-1,s-1,d)
+  s,t=s-1,t-1
+  graph.add_graph_edge(s,t,d)
+  graph.add_graph_edge(t,s,d)
 end
 
 # execute WarshallFloyd !
 graph.warshall_floyd()
 
-#ans = array[1].split(" ").map(&:to_i).each_cons(2).map do |cons|
-#  graph.dist[cons.first-1][cons.last-1]
-#  # short_path = graph.dist[cons.first-1][cons.last-1]
-#  # p "#{cons.first-1},#{cons.last-1}"
-#  # p short_path
-#  # short_path
-#end.inject(&:+)
-#
-#puts ans
+dists = rarr.permutation(R).map do |picked|
+  picked.each_cons(2).map do |arr|
+    graph.dist[arr.first][arr.last]
+  end.inject(&:+)
+end
+
+#p dists
+p dists.min
