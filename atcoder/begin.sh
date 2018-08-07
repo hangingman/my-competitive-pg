@@ -4,7 +4,7 @@ if [ $# -ne 2 ]; then
     echo "usage: ./begin.sh [contest] [number]"
     exit 1
 else
-    echo "contest: ${1}, number: ${2}"
+    echo "contest: ${1}, number: ${2}, good luck !"
     contest=${1}
     number=${2}
 fi
