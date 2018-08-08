@@ -2,12 +2,12 @@
 # k = 2
 # (w,v) ={2,2},{5,3},{2,1}
 
-INF = Float::INFINITY
+INF = 10**5
 
 class MaxAvg
 
   attr :n,:k,:w,:v,:y
-  
+
   def initialize(n,k,w,v)
     @n=n
     @k=k
@@ -15,14 +15,15 @@ class MaxAvg
     @v=v.dup
     @y=[]
   end
-  
+
   def C(x)
-    for i in 0..@n
-      @y[i]=@v[i]-x*@w[i]
+    for i in 0...@n
+      @y[i] = @v[i] - x*@w[i]
     end
-    @y=@y.sort
+    @y=@y.sort.reverse
+    p @y
     sum=0
-    for i in 0..@k
+    for i in 0...@k
       sum+=@y[n-i-1]
     end
     sum>=0
@@ -33,7 +34,7 @@ class MaxAvg
     for i in 0..100
       mid = (lb+ub)/2
       if C(mid)
-        lb = mid 
+        lb = mid
       else
         ub = mid
       end
