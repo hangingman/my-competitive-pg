@@ -1,89 +1,100 @@
-lines = <<'EOS'
-3 10
-15 9
-10 6
-6 4
-EOS
+INF=10**9
 
-#lines = $stdin.read
+def meet_in_the_middle(n,w,item)
+  tmp_h = {}
+  tmp_a = []
+
+  s = 0
+  s1 = item[0...n/2]
+  s,len = 0,s1.length
+
+  [0,1].repeated_permutation(len) do |a|
+    tmp_h = {:v => 0, :w => 0}
+    s1.zip(a).each do |test|
+      i,bit = test.first,test.last
+      if bit==1
+        tmp_h[:v] += i.first
+        tmp_h[:w] += i.last
+      end
+    end
+    tmp_a << tmp_h if tmp_h[:w] <= w
+    s += 1
+  end
+
+  tmp_a = tmp_a.sort_by{|m| -m[:v]}
+  tmp_b = []
+  ans_v = 0
+
+  s2 = item[n/2...n]
+  s,len = 0,s2.length
+  [0,1].repeated_permutation(len) do |a|
+    tmp_h = {:v => 0, :w => 0}
+
+    s2.zip(a).each do |test|
+      i,bit = test.first,test.last
+      if bit==1
+        tmp_h[:v] += i.first
+        tmp_h[:w] += i.last
+      end
+    end
+
+    if tmp_h[:w] <= w
+      x = tmp_a.detect{|e| tmp_h[:w] + e[:w] <= w }
+      ans_v = [ans_v, x[:v] + tmp_h[:v]].max unless x.nil?
+    end
+    s += 1
+  end
+
+  puts ans_v
+end
+
+def solve_sigma_v(n,w,item,max_v)
+  max_n=100
+  max_v=max_v
+  dp = Array.new(max_n+1).map{Array.new(max_n*max_v+1, INF)}
+
+  dp[0][0] = 0
+  for i in 0...n
+    for j in 0..(max_n*max_v)
+      if j < wv_h[i].keys.first
+        dp[i+1][j] = dp[i][j]
+      else
+        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].values.first] + wv_h[i].keys.first].min
+      end
+    end
+  end
+  ans = 0
+  for i in 0..max_n*max_v
+    ans = i if dp[n][i] <= w
+  end
+  puts ans
+end
+
+def solve_sigma_w(n,w,item)
+  # MAX_N=100
+  # MAX_W=100
+  # INF=10**9
+  # dp = Array.new(MAX_N+1).map{Array.new(MAX_N*MAX_V+1, INF)}
+end
+
+lines = $stdin.read
 array = lines.split("\n")
 N,W  = array[0].split(" ").map(&:to_i)
+max_v,max_w = 0,0
+
 item = array[1..N+1].map do |str|
-  str.split(" ").map(&:to_i)
+  v,w = str.split(" ").map(&:to_i)
+  max_v,max_w = [v,max_v].max, [w,max_w].max
+  [v,w]
 end
 
-# item = {v, w}
-#p item
-
-tmp_h = {}
-tmp_a = []
-
-s = 0
-S1 = item[0...N/2]
-s,len = 0,S1.length
-while s < (1<<N/2)
-  a = s.to_s(2)
-        .rjust(len,'0')
-        .split("")
-        .map(&:to_i)
-
-  tmp_h = {:v => 0, :w => 0}
-
-  S1.zip(a).each do |test|
-    i,bit = test.first,test.last
-    if bit==1
-      #puts "item=#{i},#{bit}"
-      tmp_h[:v] += i.first
-      tmp_h[:w] += i.last
-    end
+if N>30
+  if max_v <= 1000
+    solve_sigma_v(N,W,item,max_v)
+  else
+    # max_w <= 1000
+    solve_sigma_w()
   end
-
-  tmp_a << tmp_h if tmp_h[:w] <= W
-  s += 1
+else
+  meet_in_the_middle(N,W,item)
 end
-
-tmp_b = []
-
-S2 = item[N/2...N]
-s,len = 0,S2.length
-while s < (1<<N-(N/2))
-  a = s.to_s(2)
-        .rjust(len,'0')
-        .split("")
-        .map(&:to_i)
-
-  tmp_h = {:v => 0, :w => 0}
-
-  S2.zip(a).each do |test|
-    i,bit = test.first,test.last
-    if bit==1
-      #puts "item=#{i},#{bit}"
-      tmp_h[:v] += i.first
-      tmp_h[:w] += i.last
-    end
-  end
-
-  tmp_b << tmp_h if tmp_h[:w] <= W
-  s += 1
-end
-
-ans_v = 0
-
-tmp_a = tmp_a.sort_by{|m| -m[:v]}
-tmp_b = tmp_b.sort_by{|m| -m[:v]}
-
-tmp_a.sort_by{|m| -m[:v]}.each do |h|
-  test = tmp_b.select do |e|
-    h[:w] + e[:w] <= W
-  end.max_by do |e|
-    e[:v]
-  end
-  # p h
-  # p test
-  # p tmp_b
-  # puts "---"
-  possible = h[:v]+test[:v]
-  ans_v = possible if possible>ans_v
-end
-
-puts ans_v
