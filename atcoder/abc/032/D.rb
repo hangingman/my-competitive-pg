@@ -50,22 +50,16 @@ end
 
 def solve_sigma_v(n,w,wv_h,max_v)
   max_n=n
-  #max_v=1000
-  dp = Array.new(max_n+1).map{Array.new(max_n*max_v+1, INF)}
-
-  dp[0][0] = 0
+  dp = Array.new(max_n*max_v+1, INF)
+  dp[0] = 0
   for i in 0...n
-    for j in 0...(max_n*max_v)
-      if j < wv_h[i].first
-        dp[i+1][j] = dp[i][j]
-      else
-        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].first] + wv_h[i].last].min
-      end
+    for j in (max_n*max_v)..wv_h[i].last
+      dp[j] = [dp[j], dp[j-wv_h[i].last+wv_h[i].first]].min
     end
   end
   ans = 0
   for i in 0..max_n*max_v
-    ans = i if dp[n][i] <= w
+    ans = i if dp[i] <= w
   end
   puts ans
 end
