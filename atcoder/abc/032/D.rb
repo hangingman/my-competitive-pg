@@ -48,9 +48,9 @@ def meet_in_the_middle(n,w,item)
   puts ans_v
 end
 
-def solve_sigma_v(n,w,wv_h)
+def solve_sigma_v(n,w,wv_h,max_v)
   max_n=n
-  max_v=1000
+  #max_v=1000
   dp = Array.new(max_n+1).map{Array.new(max_n*max_v+1, INF)}
 
   dp[0][0] = 0
@@ -59,7 +59,7 @@ def solve_sigma_v(n,w,wv_h)
       if j < wv_h[i].first
         dp[i+1][j] = dp[i][j]
       else
-        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].last] + wv_h[i].first].min
+        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].first] + wv_h[i].last].min
       end
     end
   end
@@ -70,9 +70,9 @@ def solve_sigma_v(n,w,wv_h)
   puts ans
 end
 
-def solve_sigma_w(n,w,wv_h)
+def solve_sigma_w(n,w,wv_h,max_w)
   max_n=n
-  max_w=1000
+  #max_w=1000
   dp = Array.new(max_n+1).map{Array.new(max_n*max_w+1, -INF)}
 
   dp[0][0] = 0
@@ -81,7 +81,7 @@ def solve_sigma_w(n,w,wv_h)
       if j < wv_h[i].last
         dp[i+1][j] = dp[i][j]
       else
-        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].first] + wv_h[i].last].max
+        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].last] + wv_h[i].first].max
       end
     end
   end
@@ -99,12 +99,12 @@ item = array[1..N+1].map do |str|
   [v,w]
 end
 
-if max_v>1000 or max_w>1000
+if N > 30
   if max_v <= 1000
-    solve_sigma_v(N,W,item)
+    solve_sigma_v(N,W,item,max_v)
   else
     # max_w <= 1000
-    solve_sigma_w(N,W,item)
+    solve_sigma_w(N,W,item,max_w)
   end
 else
   meet_in_the_middle(N,W,item)
