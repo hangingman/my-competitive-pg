@@ -48,18 +48,18 @@ def meet_in_the_middle(n,w,item)
   puts ans_v
 end
 
-def solve_sigma_v(n,w,item,max_v)
-  max_n=100
-  max_v=max_v
+def solve_sigma_v(n,w,wv_h)
+  max_n=n
+  max_v=1000
   dp = Array.new(max_n+1).map{Array.new(max_n*max_v+1, INF)}
 
   dp[0][0] = 0
   for i in 0...n
-    for j in 0..(max_n*max_v)
-      if j < wv_h[i].keys.first
+    for j in 0...(max_n*max_v)
+      if j < wv_h[i].first
         dp[i+1][j] = dp[i][j]
       else
-        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].values.first] + wv_h[i].keys.first].min
+        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].last] + wv_h[i].first].min
       end
     end
   end
@@ -70,11 +70,22 @@ def solve_sigma_v(n,w,item,max_v)
   puts ans
 end
 
-def solve_sigma_w(n,w,item)
-  # MAX_N=100
-  # MAX_W=100
-  # INF=10**9
-  # dp = Array.new(MAX_N+1).map{Array.new(MAX_N*MAX_V+1, INF)}
+def solve_sigma_w(n,w,wv_h)
+  max_n=n
+  max_w=1000
+  dp = Array.new(max_n+1).map{Array.new(max_n*max_w+1, -INF)}
+
+  dp[0][0] = 0
+  for i in 0...n
+    for j in 0...(max_n*max_w)
+      if j < wv_h[i].last
+        dp[i+1][j] = dp[i][j]
+      else
+        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].first] + wv_h[i].last].max
+      end
+    end
+  end
+  puts dp.max.max
 end
 
 lines = $stdin.read
@@ -88,12 +99,12 @@ item = array[1..N+1].map do |str|
   [v,w]
 end
 
-if N>30
+if max_v>1000 or max_w>1000
   if max_v <= 1000
-    solve_sigma_v(N,W,item,max_v)
+    solve_sigma_v(N,W,item)
   else
     # max_w <= 1000
-    solve_sigma_w()
+    solve_sigma_w(N,W,item)
   end
 else
   meet_in_the_middle(N,W,item)
