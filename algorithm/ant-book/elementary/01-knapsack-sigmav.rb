@@ -1,11 +1,7 @@
-$MAX_N=100
-$MAX_V=100
-INF=10**5
-dp = Array.new($MAX_N+1).map{Array.new($MAX_N*$MAX_V+1, INF)}
+#!/usr/bin/ruby
 
-n = 4
-w = 5
-wv_h = [ {2=>3}, {1=>2}, {3=>4}, {2=>2} ]
+require 'minitest/autorun'
+
 
 def solve(n, w, wv_h, dp)
   dp[0][0] = 0
@@ -23,6 +19,23 @@ def solve(n, w, wv_h, dp)
     ans = i if dp[n][i] <= w
   end
   puts ans
+  ans
 end
 
-solve(n, w, wv_h, dp)
+MiniTest.autorun
+
+$MAX_N=100
+$MAX_V=100
+INF=10**5
+
+class Test01Knapsack < MiniTest::Test
+  def test_simple
+
+    dp = Array.new($MAX_N+1).map{Array.new($MAX_N*$MAX_V+1, INF)}
+    n = 4
+    w = 5
+    wv_h = [ {2=>3}, {1=>2}, {3=>4}, {2=>2} ]
+
+    assert_equal 7, solve(n, w, wv_h, dp)
+  end
+end
