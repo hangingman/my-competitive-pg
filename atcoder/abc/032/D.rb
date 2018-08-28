@@ -48,23 +48,21 @@ def meet_in_the_middle(n,w,item)
   puts ans_v
 end
 
-def solve_sigma_v(n,w,wv_h,max_v)
+def solve_sigma_v(n,w,vw_h,max_v)
   max_n=n
   dp = Array.new(max_n*max_v+1, INF)
   dp[0] = 0
   for i in 0...n
-    for j in (max_n*max_v)..wv_h[i].last
-      dp[j] = [dp[j], dp[j-wv_h[i].last+wv_h[i].first]].min
+    vi,wi = vw_h[i].first,vw_h[i].last
+    (1...(max_n*max_v)).reverse_each do |j|
+      dp[j] = [dp[j], dp[j-vi] + wi].min
     end
   end
-  ans = 0
-  for i in 0..max_n*max_v
-    ans = i if dp[i] <= w
-  end
-  puts ans
+
+  puts dp.index(dp.reverse.detect{|e| e <= w})
 end
 
-def solve_sigma_w(n,w,wv_h,max_w)
+def solve_sigma_w(n,w,vw_h,max_w)
   max_n=n
   #max_w=1000
   dp = Array.new(max_n+1).map{Array.new(max_n*max_w+1, -INF)}
@@ -72,10 +70,10 @@ def solve_sigma_w(n,w,wv_h,max_w)
   dp[0][0] = 0
   for i in 0...n
     for j in 0...(max_n*max_w)
-      if j < wv_h[i].last
+      if j < vw_h[i].last
         dp[i+1][j] = dp[i][j]
       else
-        dp[i+1][j] = [dp[i][j], dp[i][j-wv_h[i].last] + wv_h[i].first].max
+        dp[i+1][j] = [dp[i][j], dp[i][j-vw_h[i].last] + vw_h[i].first].max
       end
     end
   end
@@ -98,7 +96,8 @@ if N > 30
     solve_sigma_v(N,W,item,max_v)
   else
     # max_w <= 1000
-    solve_sigma_w(N,W,item,max_w)
+    puts "boo"
+    #solve_sigma_w(N,W,item,max_w)
   end
 else
   meet_in_the_middle(N,W,item)
