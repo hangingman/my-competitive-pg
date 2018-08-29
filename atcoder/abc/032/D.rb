@@ -59,7 +59,7 @@ def solve_sigma_v(n,w,vw_h,max_v)
     end
   end
 
-  puts dp.index(dp.reverse.detect{|e| e <= w})
+  puts dp.find{|e| e <= w}
 end
 
 def solve_sigma_w(n,w,vw_h,max_w)

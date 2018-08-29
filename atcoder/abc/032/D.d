@@ -66,30 +66,31 @@ void solve_sigma_v(int n, int w, pair[] vw, int max_v)
 {
   //writef("sigma_v");
   int max_n = n;
-  ulong INF = pow(10, 10);
-  ulong[][] dp = new ulong[][](max_n+1, max_n*max_v+1);
+  long INF = pow(10, 9);
+  long[] dp = new long[](max_n*max_v+1);
+  fill(dp, INF);
+  dp[0] = 0;
 
-  foreach (ref l; dp) {
-    fill(l, INF);
-  }
-  dp[0][0] = 0;
+  long ans = 0;
 
   for (int i = 0; i < n; i++) {
-    for (int j = 0; j <= max_n * max_v; j++) {
-      ulong vi = vw[i][0];
-      ulong wi = vw[i][1];
-      if (j < vi) {
-        dp[i+1][j] = dp[i][j];
-      } else {
-        dp[i+1][j] = [dp[i][j], dp[i][j-vi]+wi].reduce!(min);
+    long vi = vw[i][0];
+    long wi = vw[i][1];
+    for (long j=max_n * max_v; j>1; j--) {
+      if (j-vi >= 0) {
+        //writefln("j=%d,vi=%d ",j,vi);
+        dp[j] = [dp[j], dp[j-vi] + wi].reduce!(min);
+
+        if (dp[i] <= w && dp[i] < dp[ans]) {
+          ans = j;
+        }
       }
     }
   }
 
-  int ans = 0;
-  for (int i = 0; i < max_n*max_v; i++) {
-    if (dp[n][i] <= w) ans = i;
-  }
+  //for (long i = 0; i < dp.length; i++) {
+  //writefln("[%d] %s dp=%d, w=%d", i, ((dp[i]<w) ? "t" : "f"), dp[i], w);
+  //}
   writeln(ans);
 }
 
