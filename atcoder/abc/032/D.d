@@ -7,8 +7,9 @@ import std.format;
 import std.algorithm;
 import std.typecons;
 import std.array;
+import std.math;
 
-alias Tuple!(ulong, ulong) pair;
+alias Tuple!(long, long) pair;
 
 void stringsTo(string, T...)(string str, ref T t) {
   auto s = str.split();
@@ -63,12 +64,38 @@ void meet_in_the_mid(int n, int w, pair[] vw)
 
 void solve_sigma_v(int n, int w, pair[] vw, int max_v)
 {
+  //writef("sigma_v");
+  int max_n = n;
+  ulong INF = pow(10, 10);
+  ulong[][] dp = new ulong[][](max_n+1, max_n*max_v+1);
 
+  foreach (ref l; dp) {
+    fill(l, INF);
+  }
+  dp[0][0] = 0;
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j <= max_n * max_v; j++) {
+      ulong vi = vw[i][0];
+      ulong wi = vw[i][1];
+      if (j < vi) {
+        dp[i+1][j] = dp[i][j];
+      } else {
+        dp[i+1][j] = [dp[i][j], dp[i][j-vi]+wi].reduce!(min);
+      }
+    }
+  }
+
+  int ans = 0;
+  for (int i = 0; i < max_n*max_v; i++) {
+    if (dp[n][i] <= w) ans = i;
+  }
+  writeln(ans);
 }
 
 void solve_sigma_w(int n, int w, pair[] vw, int max_w)
 {
-
+  writef("sigma_w");
 }
 
 void main()
@@ -102,11 +129,11 @@ void main()
     // meet in the mid
     meet_in_the_mid(N, W, vw);
   } else {
-    //  // 01 knapsack
-    //  if (max_v <= 1000) {
-    //    solve_sigma_v(N, W, vw, max_v);
-    //  } else {
-    //    solve_sigma_w(N, W, vw, max_w);
-    //  }
+    // 01 knapsack
+    if (max_v <= 1000) {
+      solve_sigma_v(N, W, vw, max_v);
+    } else {
+      solve_sigma_w(N, W, vw, max_w);
+    }
   }
 }
