@@ -1,0 +1,25 @@
+#!/usr/bin/env rdmd
+
+import std.stdio;
+import std.conv;
+import std.string;
+import std.format;
+import std.algorithm;
+
+//string lines = q"[
+//abcdeffg]";
+
+void main()
+{
+
+  string lines;
+  string buf;
+
+  while (!stdin.eof) {
+    buf = stdin.readln();
+    lines ~= buf;
+  }
+
+  string[] array = splitLines(lines);
+  writeln(to!string(array));
+}
