@@ -22,7 +22,7 @@ void stringsTo(string, T...)(string str, ref T t) {
 void meet_in_the_mid(int n, int w, pair[] vw)
 {
   int s = 0;
-  pair[] s1 = vw[0..n/2-1];
+  pair[] s1 = vw[0..n/2];
   pair[] s2 = vw[n/2..n];
   pair[] tmp_a;
 
