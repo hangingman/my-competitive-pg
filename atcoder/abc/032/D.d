@@ -11,6 +11,9 @@ import std.math;
 
 alias Tuple!(long, long) pair;
 
+immutable long INF = pow(10, 9);
+long[][] dp; // = new long[][](222, 222222);
+
 void stringsTo(string, T...)(string str, ref T t) {
   auto s = str.split();
   assert(s.length == t.length);
@@ -64,39 +67,53 @@ void meet_in_the_mid(int n, int w, pair[] vw)
 
 void solve_sigma_v(int n, int w, pair[] vw, int max_v)
 {
-  //writef("sigma_v");
-  int max_n = n;
-  long INF = pow(10, 9);
-  long[] dp = new long[](max_n*max_v+1);
-  fill(dp, INF);
-  dp[0] = 0;
-
   long ans = 0;
 
-  for (int i = 0; i < n; i++) {
+  for (long i = 0; i < 222222; i++) {
+    dp[0][i] = INF;
+  }
+  dp[0][0] = 0;
+
+  for (long i = 0; i < n; i++) {
     long vi = vw[i][0];
     long wi = vw[i][1];
-    for (long j=max_n * max_v; j>1; j--) {
-      if (j-vi >= 0) {
-        //writefln("j=%d,vi=%d ",j,vi);
-        dp[j] = [dp[j], dp[j-vi] + wi].reduce!(min);
 
-        if (dp[i] <= w && dp[i] < dp[ans]) {
-          ans = j;
-        }
-      }
+    for (long j = 0; j < vi; j++) {
+      dp[i+1][j] = dp[i][j];
+    }
+    for (long j = vi; j < 222222; j++) {
+      dp[i+1][j] = [dp[i][j], dp[i][j-vi]+wi].reduce!(min);
     }
   }
 
-  //for (long i = 0; i < dp.length; i++) {
-  //writefln("[%d] %s dp=%d, w=%d", i, ((dp[i]<w) ? "t" : "f"), dp[i], w);
-  //}
+  for (long i = 0; i < 222222; i++) {
+    if (dp[n][i] <= w) {
+      ans = [ans, i].reduce!(max);
+    }
+  }
   writeln(ans);
 }
 
 void solve_sigma_w(int n, int w, pair[] vw, int max_w)
 {
-  writef("sigma_w");
+  long ans = 0;
+
+  for (long i = 0; i < n; i++) {
+    long vi = vw[i][0];
+    long wi = vw[i][1];
+
+    for (long j = 0; j < 222222; j++) {
+      dp[i+1][j] = dp[i][j];
+    }
+    for (long j = wi; j < 222222; j++) {
+      dp[i+1][j] = [dp[i+1][j], dp[i][j-wi]+vi].reduce!(max);
+    }
+  }
+
+  for (long i = 0; i < w+1; i++) {
+    ans = [ans, dp[n][i]].reduce!(max);
+  }
+  writeln(ans);
 }
 
 void main()
@@ -116,6 +133,7 @@ void main()
   pair[] vw = new pair[N];
   int max_v, max_w;
 
+
   foreach (i; 1..N+1) {
     int v, w;
     stringsTo(array[i], v, w);
@@ -131,6 +149,8 @@ void main()
     meet_in_the_mid(N, W, vw);
   } else {
     // 01 knapsack
+    dp = new long[][](222, 222222);
+
     if (max_v <= 1000) {
       solve_sigma_v(N, W, vw, max_v);
     } else {
