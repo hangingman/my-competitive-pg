@@ -11,7 +11,7 @@ import std.math;
 
 alias Tuple!(long, long) pair;
 
-immutable long INF = pow(10, 9);
+immutable long INF = pow(10, 10);
 
 void stringsTo(string, T...)(string str, ref T t) {
   auto s = str.split();
