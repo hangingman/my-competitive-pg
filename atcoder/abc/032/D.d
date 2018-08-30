@@ -12,7 +12,6 @@ import std.math;
 alias Tuple!(long, long) pair;
 
 immutable long INF = pow(10, 9);
-long[][] dp; // = new long[][](222, 222222);
 
 void stringsTo(string, T...)(string str, ref T t) {
   auto s = str.split();
@@ -65,13 +64,14 @@ void meet_in_the_mid(int n, int w, pair[] vw)
   writefln("%d", ans);
 }
 
-void solve_sigma_v(int n, int w, pair[] vw)
+void solve_sigma_v(int n, int w, pair[] vw, int max_v)
 {
   long ans = 0;
+  int max_n = n;
+  long[][] dp = new long[][](max_n+1, max_n*max_v+1);
 
-  //fill(dp[0], INF);
-  for (long i = 0; i < 222222; i++) {
-    dp[0][i] = INF;
+  foreach (ref l; dp) {
+    fill(l, INF);
   }
   dp[0][0] = 0;
 
@@ -82,36 +82,36 @@ void solve_sigma_v(int n, int w, pair[] vw)
     for (long j = 0; j < vi; j++) {
       dp[i+1][j] = dp[i][j];
     }
-    for (long j = vi; j < 222222; j++) {
+    for (long j = vi; j < max_n * max_v; j++) {
       dp[i+1][j] = (dp[i][j] > dp[i][j-vi]+wi) ? dp[i][j-vi]+wi : dp[i][j];
     }
   }
 
-  for (long i = 0; i < 222222; i++) {
-    if (dp[n][i] <= w) {
-      ans = (ans > i) ? ans : i;
-    }
+  for (long i = 0; i < max_n * max_v; i++) {
+    if (dp[n][i] <= w) ans = i;
   }
   writeln(ans);
 }
 
-void solve_sigma_w(int n, int w, pair[] vw)
+void solve_sigma_w(int n, int w, pair[] vw, int max_w)
 {
   long ans = 0;
+  int max_n = n;
+  long[][] dp = new long[][](max_n+1, max_n*max_w+1);
 
   for (long i = 0; i < n; i++) {
     long vi = vw[i][0];
     long wi = vw[i][1];
 
-    for (long j = 0; j < 222222; j++) {
+    for (long j = 0; j < max_n*max_w+1; j++) {
       dp[i+1][j] = dp[i][j];
     }
-    for (long j = wi; j < 222222; j++) {
+    for (long j = wi; j < max_n*max_w+1; j++) {
       dp[i+1][j] = (dp[i+1][j] > dp[i][j-wi]+vi) ? dp[i+1][j] : dp[i][j-wi]+vi;
     }
   }
 
-  for (long i = 0; i < w+1; i++) {
+  for (long i = 0; i < w + 1; i++) {
     ans = (ans > dp[n][i]) ? ans : dp[n][i];
   }
   writeln(ans);
@@ -150,12 +150,10 @@ void main()
     meet_in_the_mid(N, W, vw);
   } else {
     // 01 knapsack
-    dp = new long[][](222, 222222);
-
     if (max_v < 1001) {
-      solve_sigma_v(N, W, vw);
+      solve_sigma_v(N, W, vw, max_v);
     } else {
-      solve_sigma_w(N, W, vw);
+      solve_sigma_w(N, W, vw, max_w);
     }
   }
 }
