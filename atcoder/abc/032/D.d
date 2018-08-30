@@ -65,10 +65,11 @@ void meet_in_the_mid(int n, int w, pair[] vw)
   writefln("%d", ans);
 }
 
-void solve_sigma_v(int n, int w, pair[] vw, int max_v)
+void solve_sigma_v(int n, int w, pair[] vw)
 {
   long ans = 0;
 
+  //fill(dp[0], INF);
   for (long i = 0; i < 222222; i++) {
     dp[0][i] = INF;
   }
@@ -82,19 +83,19 @@ void solve_sigma_v(int n, int w, pair[] vw, int max_v)
       dp[i+1][j] = dp[i][j];
     }
     for (long j = vi; j < 222222; j++) {
-      dp[i+1][j] = [dp[i][j], dp[i][j-vi]+wi].reduce!(min);
+      dp[i+1][j] = (dp[i][j] > dp[i][j-vi]+wi) ? dp[i][j-vi]+wi : dp[i][j];
     }
   }
 
   for (long i = 0; i < 222222; i++) {
     if (dp[n][i] <= w) {
-      ans = [ans, i].reduce!(max);
+      ans = (ans > i) ? ans : i;
     }
   }
   writeln(ans);
 }
 
-void solve_sigma_w(int n, int w, pair[] vw, int max_w)
+void solve_sigma_w(int n, int w, pair[] vw)
 {
   long ans = 0;
 
@@ -106,12 +107,12 @@ void solve_sigma_w(int n, int w, pair[] vw, int max_w)
       dp[i+1][j] = dp[i][j];
     }
     for (long j = wi; j < 222222; j++) {
-      dp[i+1][j] = [dp[i+1][j], dp[i][j-wi]+vi].reduce!(max);
+      dp[i+1][j] = (dp[i+1][j] > dp[i][j-wi]+vi) ? dp[i+1][j] : dp[i][j-wi]+vi;
     }
   }
 
   for (long i = 0; i < w+1; i++) {
-    ans = [ans, dp[n][i]].reduce!(max);
+    ans = (ans > dp[n][i]) ? ans : dp[n][i];
   }
   writeln(ans);
 }
@@ -137,24 +138,24 @@ void main()
   foreach (i; 1..N+1) {
     int v, w;
     stringsTo(array[i], v, w);
-    max_v = reduce!(max)([v, max_v]);
-    max_w = reduce!(max)([w, max_w]);
+    max_v = (v > max_v) ? v : max_v;
+    max_w = (w > max_w) ? w : max_w;
     pair p = pair(v, w);
     //writef("v:%d, w:%d\n", p[0], p[1]);
     vw[i-1] = p;
   }
 
-  if (N <= 30) {
+  if (N < 31) {
     // meet in the mid
     meet_in_the_mid(N, W, vw);
   } else {
     // 01 knapsack
     dp = new long[][](222, 222222);
 
-    if (max_v <= 1000) {
-      solve_sigma_v(N, W, vw, max_v);
+    if (max_v < 1001) {
+      solve_sigma_v(N, W, vw);
     } else {
-      solve_sigma_w(N, W, vw, max_w);
+      solve_sigma_w(N, W, vw);
     }
   }
 }
