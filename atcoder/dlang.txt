@@ -9,6 +9,15 @@ import std.algorithm;
 //string lines = q"[
 //abcdeffg]";
 
+void stringsTo(string, T...)(string str, ref T t) {
+  auto s = str.split();
+  assert(s.length == t.length);
+  foreach(ref ti; t) {
+    ti = s[0].to!(typeof(ti));
+    s = s[1..$];
+  }
+}
+
 void main()
 {
 
