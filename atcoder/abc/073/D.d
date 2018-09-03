@@ -22,13 +22,13 @@ struct Node {
   int   u; // :u ノードのインデックス
   ulong k; // :k u の出次数
   int[] v; // :v u に隣接する頂点の番号
-  int[] w; // :w 隣接する頂点への重み
+  int[int] w; // :w 隣接する頂点への重み
 };
 
 class Graph {
   public int n;
   public Node[] nodes;
-  public int[][] dist;
+  public long[][] dist;
 
   this(int n) {
     this.n = n;
@@ -36,7 +36,7 @@ class Graph {
     foreach (int i, ref node; this.nodes) {
       node.u = i;
     }
-    this.dist = new int [][](n,n);
+    this.dist = new long [][](n,n);
   }
 
   void addGraphEdge(int u, int v, int w) {
@@ -48,14 +48,27 @@ class Graph {
   void warshallFloyd() {
     for (int i = 0; i < this.nodes.length; i++ ) {
       for (int j = 0; j < this.nodes.length; j++ ) {
-	if ([j] in this.nodes[i].w) {
-	  this.dist[i][j] = this.nodes[i].w[j];
+	int* val = j in this.nodes[i].w;
+	if (val != null) {
+	  this.dist[i][j] = *val;
 	} else {
 	  this.dist[i][j] = INF;
 	}
       }
+      this.dist[i][i] = 0;
     }
-    this.dist[i][i] = 0;
+
+    for (int k = 0; k < this.nodes.length; k++) {
+      for (int i = 0; i < this.nodes.length; i++) {
+	for (int j = 0; j < this.nodes.length; j++) {
+	  if (this.dist[i][k] != INF && this.dist[k][j] != INF) {
+	    long a = this.dist[i][j];
+	    long b = this.dist[i][k] + this.dist[k][j];
+	    this.dist[i][j] = (a > b) ? b : a;
+	  }
+	}
+      }
+    }
   }
 }
 
