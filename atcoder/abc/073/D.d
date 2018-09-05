@@ -63,9 +63,7 @@ class Graph {
       for (int i = 0; i < this.nodes.length; i++) {
 	for (int j = 0; j < this.nodes.length; j++) {
 	  if (this.dist[i][k] != INF && this.dist[k][j] != INF) {
-	    long a = this.dist[i][j];
-	    long b = this.dist[i][k] + this.dist[k][j];
-	    this.dist[i][j] = (a > b) ? b : a;
+	    this.dist[i][j] = min(this.dist[i][j], this.dist[i][k] + this.dist[k][j]);
 	  }
 	}
       }
@@ -87,9 +85,10 @@ void main()
   string[] array = splitLines(lines);
   //writeln(to!string(array));
   int N,M,R;
-  stringsTo(array[0], N, M , R);
+  stringsTo(array[0], N, M, R);
   Graph graph = new Graph(N);
   int[] rarr = array[1].split(" ").map!( (s) => s.to!int ).array;
+  sort(rarr); // １行で書きたいんやが…
 
   foreach (str; array[2..M+2]) {
     int s,t,d;
@@ -121,4 +120,10 @@ void main()
   while(nextPermutation(rarr));
 
   writeln(ans);
+
+  //writeln(graph.dist);
+  //cat in2.txt | ./D.d
+  //[[0, 2, 4],
+  // [2, 0, 2],
+  // [4, 2, 0]]
 }

@@ -76,19 +76,7 @@ class Graph
   end
 end
 
-
-lines = <<'EOS'
-4 6 3
-2 3 4
-1 2 4
-2 3 3
-4 3 1
-1 4 1
-4 2 2
-3 1 6
-EOS
-
-#lines = $stdin.read
+lines = $stdin.read
 array = lines.split("\n")
 
 N,M,R = array[0].split(" ").map(&:to_i)
@@ -108,23 +96,14 @@ ans = INF
 
 $rarr.permutation(R).each do |picked|
   s = 0
-  #p picked
   picked.each_cons(2).each do |arr|
-    puts "#{arr.first},#{arr.last}"
     s += $graph.dist[arr.first][arr.last]
   end
-  puts s
   ans = [s,ans].min
 end
 
-# $rarr.combination(R).each do |picked|
-#   s = 0
-#   picked.each_cons(2).each do |arr|
-#     puts "#{arr.first},#{arr.last}"
-#     s += $graph.dist[arr.first][arr.last]
-#   end
-#   puts ""
-#   ans = [s,ans].min
-# end
+p $graph.dist
+#puts ans
 
-puts ans
+# cat in.txt | ruby D.rb
+# [[0, 3, 2, 1], [3, 0, 3, 2], [2, 3, 0, 1], [1, 2, 1, 0]]
