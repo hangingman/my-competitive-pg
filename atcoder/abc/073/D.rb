@@ -7,18 +7,14 @@
 # :k u の出次数
 # :v u に隣接する頂点の番号
 # :w 隣接する頂点への重み
-# ----------------------
-# Prim
-# ----------------------
-# :p 前のノード
-# :c フラグ
 #
 INF  = Float::INFINITY
-Node = Struct.new(:u, :k, :v, :w, :p, :c)
+Node = Struct.new(:u, :k, :v, :w)
 
 class Graph
-  attr :nodes, :dist
+  attr :n, :nodes, :dist
   def initialize(n)
+    @n     = n
     @nodes = Array.new(n){ Node.new }
     @nodes = @nodes.map.with_index do |node,idx|
       node.u = idx
@@ -48,8 +44,8 @@ class Graph
 
   def warshall_floyd()
     # initialize
-    for i in 0...@nodes.length
-      for j in 0...@nodes.length
+    for i in 0...@n
+      for j in 0...@n
         @dist[i][j] = if not @nodes[i].w.nil? and @nodes[i].w.has_key?(j)
                         @nodes[i].w[j]
                       else
@@ -60,9 +56,9 @@ class Graph
     end
 
     # calc
-    for k in 0...@nodes.length
-      for i in 0...@nodes.length
-        for j in 0...@nodes.length
+    for k in 0...@n
+      for i in 0...@n
+        for j in 0...@n
           if @dist[i][k] != INF and @dist[k][j] != INF
             @dist[i][j] = [@dist[i][j], @dist[i][k] + @dist[k][j]].min
           end
@@ -73,42 +69,13 @@ class Graph
 
   def has_negative_cycle?()
     ans = false
-    for v in 0...@nodes.length
+    for v in 0...V
       ans = true if @dist[v][v] < 0
     end
     ans
   end
-
-  def prim(start=0, node_needed=[])
-    mincost = INF
-
-    @nodes.each do |node|
-      node.w.each do |node_from, node_to|
-        if node.c != :black and node_to < mincost
-          mincost = node_to
-          next_u = node.u
-        end
-      end
-    end
-
-    break if mincost == INF
-
-    @nodes[(next_u).to_i].c = :black
-
-    @nodes = @nodes.map.with_index do |node, v|
-      if node.c != :black and @dist[next_u][v] != INF and mat[next_u-1][v-1] < node.d
-        node.d = mat[next_u-1][v-1]
-        node.p = next_u
-        node.c = :gray
-        #puts "  update: node(#{node.u}), d = #{node.d}, parent = #{next_u}"
-        node
-      else
-        node
-      end
-    end
-
-  end
 end
+
 
 lines = <<'EOS'
 4 6 3
@@ -125,24 +92,39 @@ EOS
 array = lines.split("\n")
 
 N,M,R = array[0].split(" ").map(&:to_i)
-graph = Graph.new(N)
-rarr  = array[1].split(" ").map(&:to_i).map{|idx| idx-1}
+$graph = Graph.new(N)
+$rarr  = array[1].split(" ").map(&:to_i).map{|idx| idx-1}
 
 array[2..M+1].each do |s|
   s,t,d = s.split(" ").map(&:to_i)
   s,t=s-1,t-1
-  graph.add_graph_edge(s,t,d)
-  graph.add_graph_edge(t,s,d)
+  $graph.add_graph_edge(s,t,d)
+  $graph.add_graph_edge(t,s,d)
 end
 
 # execute WarshallFloyd !
-graph.warshall_floyd()
+$graph.warshall_floyd()
+ans = INF
 
-dists = rarr.permutation(R).map do |picked|
-  picked.each_cons(2).map do |arr|
-    graph.dist[arr.first][arr.last]
-  end.inject(&:+)
+$rarr.permutation(R).each do |picked|
+  s = 0
+  #p picked
+  picked.each_cons(2).each do |arr|
+    puts "#{arr.first},#{arr.last}"
+    s += $graph.dist[arr.first][arr.last]
+  end
+  puts s
+  ans = [s,ans].min
 end
 
-#p dists
-p dists.min
+# $rarr.combination(R).each do |picked|
+#   s = 0
+#   picked.each_cons(2).each do |arr|
+#     puts "#{arr.first},#{arr.last}"
+#     s += $graph.dist[arr.first][arr.last]
+#   end
+#   puts ""
+#   ans = [s,ans].min
+# end
+
+puts ans

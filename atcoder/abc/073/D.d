@@ -6,6 +6,7 @@ import std.string;
 import std.format;
 import std.algorithm;
 import std.array;
+import std.math;
 
 void stringsTo(string, T...)(string str, ref T t) {
   auto s = str.split();
@@ -16,7 +17,7 @@ void stringsTo(string, T...)(string str, ref T t) {
   }
 }
 
-long INF = 10^9;
+long INF = pow(10, 9);
 
 struct Node {
   int   u; // :u ノードのインデックス
@@ -101,6 +102,23 @@ void main()
 
   graph.warshallFloyd();
   long ans = INF;
+
+  // Rから2つ選ぶ全探索
+  //writeln(join(rarr.map!(s => s.to!string), ","));
+
+  import std.algorithm : nextPermutation;
+
+  do
+    {
+      long s = 0;
+      for (int i = 1; i < rarr.length; i++) {
+        //writeln(rarr[i-1]-1, ",", rarr[i]-1);
+        s += graph.dist[rarr[i-1] - 1][rarr[i] - 1];
+      }
+      //writeln(s);
+      ans = min(s, ans);
+    }
+  while(nextPermutation(rarr));
 
   writeln(ans);
 }
