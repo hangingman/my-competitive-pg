@@ -5,6 +5,10 @@ import std.conv;
 import std.string;
 import std.format;
 import std.algorithm;
+import std.array;
+import std.math;
+
+long INF = pow(10, 9);
 
 //string lines = q"[
 //abcdeffg]";
