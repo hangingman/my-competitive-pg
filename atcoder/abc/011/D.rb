@@ -43,22 +43,29 @@ array = lines.split("\n")
 N,D = array[0].split(" ").map(&:to_i)
 X,Y = array[1].split(" ").map(&:to_i)
 
+comb = Combination.new(D)
+
 ans  = 0
-comb = Combination.new(N*D)
+shortest = comb.choose(N, X/D)
 
-for k in 0..N
-  lr_move_k = k*D
-  ud_move_k = (N-k)*D
+if (X%D) != 0 or (Y%D) != 0
+  puts 0.0
+else
+  for k in 0..N
+    lr_move_k = k*D
+    ud_move_k = (N-k)*D
 
-  lr_r = (lr_move_k+X)/2
-  ud_r = (ud_move_k+Y)/2
+    next if lr_move_k < X or ud_move_k < Y
 
-  nu = comb.choose(N, N-k)
-  lr = comb.choose(lr_move_k, lr_r)
-  ud = comb.choose(ud_move_k, ud_r)
+    lr_r = (lr_move_k+X)/2
+    ud_r = (ud_move_k+Y)/2
 
-  puts "#{N}C#{N-k}=#{nu} * #{lr_move_k}C#{lr_r}=#{lr} * #{ud_move_k}C#{ud_r}=#{ud}"
-  ans += (nu*lr*ud)
+    lr = comb.choose(lr_move_k, lr_r)
+    ud = comb.choose(ud_move_k, ud_r)
+
+    tmp = (shortest*lr*ud)
+    ans += tmp
+    puts "#{shortest} * #{lr_move_k}C#{lr_r}=#{lr} * #{ud_move_k}C#{ud_r}=#{ud} = #{tmp}"
+  end
+  puts ans.quo(4**N).to_f
 end
-
-puts ans.quo(4**N).to_f
