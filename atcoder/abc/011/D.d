@@ -81,34 +81,56 @@ void main()
   stringsTo(array[1], X, Y);
 
   if ((X%D)!=0 || (Y%D)!=0) {
-    writeln(0.0);
+    writefln("%f", cast(float) 0);
   } else {
-    Combination comb = new Combination(N*D);
-    long shortest = comb.choose(N, X/D);
+    Combination comb = new Combination(N+7);
     long ans = 0;
 
-    foreach (int k; 0..N+1) {
-      int lr_move_k = k*D;
-      int ud_move_k = (N-k)*D;
+    int short_lr = X/D;
+    int short_ud = Y/D;
 
-      if (lr_move_k < X || ud_move_k < Y) {
+    // writefln("Goal (%d, %d), movable %d", X, Y, D);
+    // writefln("shortest move left/right: %d, up/down:%d", X/D, Y/D);
+    // writefln("is there any mod ? left/right: %d, up/down:%d", X%D, Y%D);
+
+    long shortest = comb.choose(short_lr+short_ud, short_lr);
+
+    foreach (int k; 0..N+1) {
+      int lr_move_k = k;
+      int ud_move_k = (N-k);
+
+      int lr_r = (lr_move_k*D+X)/2/D;
+      int ud_r = (ud_move_k*D+Y)/2/D;
+
+      if (lr_move_k < short_lr || ud_move_k < short_ud) {
+        //writefln("lr_r=%d, ud_r=%d, N=%d", lr_r, ud_r, N);
         continue;
       } else {
-        int lr_r = (lr_move_k+X)/2;
-        int ud_r = (ud_move_k+Y)/2;
+
+        // if (short_lr%2==0 && lr_move_k%2!=0 || short_lr%2!=0 && lr_move_k%2==0) {
+        //   continue;
+        // }
+        // if (short_ud%2==0 && ud_move_k%2!=0 || short_ud%2!=0 && ud_move_k%2==0) {
+        //   continue;
+        // }
+
+        // writefln("lr_move_k=%d, ud_move_k=%d, N=%d", lr_move_k, ud_move_k,N);
+        // writefln("lr_r=%d, ud_r=%d, N=%d", lr_r, ud_r, N);
+
         long lr = comb.choose(lr_move_k, lr_r);
         long ud = comb.choose(ud_move_k, ud_r);
         long tmp = (shortest*lr*ud);
 
-        writefln("%d * %dC%d=%d * %dC%d=%d = %d",
-                 shortest,
-                 lr_move_k, lr_r, lr,
-                 ud_move_k, ud_r, ud,
-                 tmp);
+        // writefln("%d * %dC%d=%d * %dC%d=%d = %d",
+        //          shortest,
+        //          lr_move_k, lr_r, lr,
+        //          ud_move_k, ud_r, ud,
+        //          tmp);
+
         ans += tmp;
       }
 
-      writefln("%f", cast(float) ans/pow(4,N));
+      writefln("%9f", cast(float) ans/pow(4,N));
     }
   }
 }
