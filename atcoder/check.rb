@@ -24,15 +24,15 @@ abc_files = Dir.glob("abc/**/*.{rb,d,cr}")
 
 (1..145).each do |index|
   formed_index = sprintf("%03d", index)
-  puts "abc#{formed_index}"
 
   ["A", "B", "C", "D"].each_with_index do |alpha, digit|
     rb = ["abc", formed_index, alpha+".rb"].join("/")
     dlang = ["abc", formed_index, alpha+".d"].join("/")
     cr = ["abc", formed_index, alpha+".cr"].join("/")
-    has_file=abc_files.include?(rb) or
-      abc_files.include?(dlang) or
-      abc_files.include?(cr)
+
+    has_file=(abc_files.include?(rb) or
+              abc_files.include?(dlang) or
+              abc_files.include?(cr))
 
     alpha_id = alpha.downcase
     digit_id = digit + 1
