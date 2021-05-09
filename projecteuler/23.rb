@@ -1,37 +1,46 @@
+# coding: utf-8
 
 
-def detect_pf(n)
-   return 0 if n == 1
-   array = n.downto(1).to_a.select{|x| n % x == 0 && n != x}
-   sum = array.inject(:+)
-   if sum == n
-      :pf
-   elsif sum > n
-      :ab
-   else
-      :de
-   end
+def make_divisors(n)
+    divisors = []
+    for i in 1..((n**0.5)+1).to_i
+        if n % i == 0
+            divisors << i
+            if i != n / i
+                divisors << n/i
+            end
+        end
+    end
+    divisors.uniq.sort
 end
 
-puts "--- test ---"
-puts "28 is perfect number ? #{detect_pf(28)}"
+# deficient = 不足数, abundant = 過剰数
+abundant, deficient = [], []
 
-puts "--- RUN ---"
+(1..28123).to_a.each do |n|
+  # puts "#{n} = #{make_divisors(n).inject(&:+) - n}"
+  proper_divisor = make_divisors(n).inject(&:+) - n
 
-ab_array = []
-
-28123.downto(1) do |n|
-   if detect_pf(n) == :ab
-      ab_array << n
-      puts ". #{n}"
-   else
-      printf "."
-   end
+  if proper_divisor > n
+    # puts "n=#{n}, #{make_divisors(n)} => #{proper_divisor} ab"
+    abundant << n
+  elsif n == proper_divisor
+    # NOP
+  else
+    # puts "n=#{n}, #{make_divisors(n)} => #{proper_divisor} df"
+    deficient << n
+  end
 end
 
-ab_array.sort!
-array = 1.upto(28123).to_a - ab_array
+# 2つの過剰数の和で書き表せない正の整数の総和を求めよ, なので
+# 2つの過剰数の和で書き表せる正の整数の総和を求めて、全体から引く
+ans = []
+abundant.repeated_permutation(2) do |arr|
+  sum = arr.inject(&:+)
+  ans << sum if sum <= 28123
+end
+ans.uniq!
 
-puts "abundon numbers size => #{ab_array.length}"
-puts "1~28123 array except abundon numbers =>"
-puts array.to_s
+p abundant.size
+p ans.size
+p (0..28123).inject(&:+) - ans.inject(&:+)
