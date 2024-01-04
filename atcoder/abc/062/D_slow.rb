@@ -1,3 +1,5 @@
+# 062 Dを優先度つきキューで愚直に実装したもの
+
 # ref: https://qiita.com/superrino130/items/6c8d56203ff4379f5267
 class Heap
   attr_reader :size, :heap
@@ -50,63 +52,52 @@ class Heap
 end
 
 #lines = <<'EOS'
-#2
-#1 3 3 6 1 7
-#EOS
-
-#lines = <<'EOS'
-#1
-#6 2 10
-#EOS
-#lines = <<'EOS'
-#2
-#2 5 9 7 5 3
+#3
+#8 2 2 7 4 6 5 3 8
 #EOS
 #lines = <<'EOS'
 #1
-#370204096 966452716 888323438
+#1 2 3
 #EOS
 
 lines = $stdin.read
 array = lines.split("\n")
 N = array[0].to_i
-A = array[1].split(" ").map(&:to_i)
 
 max_heap = Heap.new(up: false)
-min_heap = Heap.new(up: true)
+A = array[1].split(" ").map(&:to_i)
+
+
+ans = 0
 
 1.upto(N) do |i|
   max_heap.push(A[i-1])
 end
-(3*N).downto(2*N+1) do |i|
+min_heap = Heap.new(up: true)
+(N+1).upto(3*N) do |i|
   min_heap.push(A[i-1])
 end
+while min_heap.size != N
+  min_heap.pop
+end
 
-max_heap_tmp = {}
-min_heap_tmp = {}
+#puts "max #{max_heap.sum}, min #{min_heap.sum.abs}"
+ans = max_heap.sum - min_heap.sum.abs
 
-max_heap_tmp[N] = max_heap.sum
-min_heap_tmp[2*N] = min_heap.sum
-
-# max_heap
 (N+1).upto(2*N) do |k|
+
   max_heap.push(A[k-1])
   max_heap.pop
 
-  max_heap_tmp[k] = max_heap.sum
+  min_heap = Heap.new(up: true)
+  (k+1).upto(3*N) do |i|
+    min_heap.push(A[i-1])
+  end
+  while min_heap.size != N
+    min_heap.pop
+  end
+  #puts "max #{max_heap.sum}, min #{min_heap.sum.abs}"
+  ans = [ans, max_heap.sum - min_heap.sum.abs].max
 end
 
-(2*N).downto(N+1) do |dk|
-  min_heap.push(A[dk-1])
-  min_heap.pop
-
-  k = dk - 1
-  min_heap_tmp[k] = min_heap.sum
-end
-
-ans = []
-max_heap_tmp.each do |k,v|
-  ans << v + min_heap_tmp[k]
-end
-
-puts ans.max
+puts ans
