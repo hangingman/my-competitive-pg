@@ -18,5 +18,5 @@ $ make install-dev  # 開発モードでインストール
 $ make lint  # Linterを実行
 $ make format  # フォーマッタを実行
 $ make test  # テストを実行
-$ streamlit run CompeteAI/app.py  # Streamlitアプリケーションを実行
+$ streamlit run src/CompeteAI/app.py  # Streamlitアプリケーションを実行
 ```
