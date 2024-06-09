@@ -11,4 +11,4 @@ class AgentService:
 
     def solve_problem(self, problem_statement_text: str) -> str:
         problem_statement = ProblemStatement(text=problem_statement_text)
-        return self.agent.solve_problem(problem_statement)
+        return self.agent.analyze_problem(problem_statement)

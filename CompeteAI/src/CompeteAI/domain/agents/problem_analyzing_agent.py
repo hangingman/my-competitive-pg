@@ -8,14 +8,14 @@ from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.infra.memory.memory import CustomMemory
 
 
-class ProblemSolvingAgent:
-    def __init__(self, tool):
+class ProblemAnalyzingAgent:
+    def __init__(self, tool=None):
         self.tool = tool
         api_key = os.getenv("OPENAI_API_KEY")
         self.llm = ChatOpenAI(api_key=api_key, model_name="gpt-4-turbo")
         self.memory = CustomMemory(llm=self.llm)
 
-    def solve_problem(self, problem_statement: ProblemStatement) -> str:
+    def analyze_problem(self, problem_statement: ProblemStatement) -> str:
         langchain.verbose = True
         #context = self.memory.load_context()
         prompt = ChatPromptTemplate.from_messages([
@@ -40,6 +40,6 @@ class ProblemSolvingAgent:
             # memory=memory,
         )
 
-        solution = chain.invoke(input={})
+        solution: dict = chain.invoke(input={})
         #self.memory.save_context(problem_statement.text, solution)
-        return solution
+        return solution['text']
