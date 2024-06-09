@@ -16,19 +16,20 @@ def main():
 
     if input_type == "URL入力":
         url = st.text_input("ここに問題のURLを入力")
-        if st.button("問題を解決"):
+        if st.button("問題の分析"):
             problem_statement = ProblemStatement("")
             problem_statement.set_url(url)
             agent = ProblemSolvingAgent(AlgorithmStrategyTool())
             solution = agent.solve_problem(problem_statement)
-            st.write("解決策:", solution)
+            st.write("分析結果:", solution)
     else:
-        text = st.text_area("ここに問題のテキストを入力")
-        if st.button("問題を解決"):
+        text = st.text_area("ここに問題のテキストを入力", value="""素数を小さい方から6つ並べると 2, 3, 5, 7, 11, 13 であり, 6番目の素数は 13 である.
+10001 番目の素数を求めよ.""")
+        if st.button("問題を分析"):
             problem_statement = ProblemStatement(text)
             agent = ProblemSolvingAgent(AlgorithmStrategyTool())
             solution = agent.solve_problem(problem_statement)
-            st.write("解決策:", solution)
+            st.write("分析結果:", solution)
 
 
 if __name__ == "__main__":
