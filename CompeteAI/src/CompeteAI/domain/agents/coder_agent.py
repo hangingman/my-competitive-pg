@@ -1,8 +1,9 @@
 import os
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts.chat import ChatPromptTemplate
+
 import langchain
 from langchain.chains.llm import LLMChain
+from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
 
 from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.infra.memory.memory import CustomMemory
@@ -21,17 +22,25 @@ class CoderAgent:
 
     def solve(self, chatlog: []) -> str:
         langchain.verbose = True
-        #context = self.memory.load_context()
-        prompt = ChatPromptTemplate.from_messages([
-            ('system', """# 命令書:
+        # context = self.memory.load_context()
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """# 命令書:
 あなたはアルゴリズムと数学に長けた最高のプログラマーです。以下の疑似コードをもとにRubyコードを出力せよ。
 
-"""),
-            ('system', """{analysis}"""),
-            ('system', """{pseudo_code}"""),
-            ('user', """# 入力文：
-{problem}"""),
-        ])
+""",
+                ),
+                ("system", """{analysis}"""),
+                ("system", """{pseudo_code}"""),
+                (
+                    "user",
+                    """# 入力文：
+{problem}""",
+                ),
+            ]
+        )
 
         chain = LLMChain(
             prompt=prompt,
@@ -40,17 +49,19 @@ class CoderAgent:
             # memory=memory,
         )
 
-        psedo_code: dict = chain.invoke(input={
-            'analysis': get_first_dict_by_key(chatlog, 'analysis')['msg'],
-            'pseudo_code': get_first_dict_by_key(chatlog, 'pseudo_code')['msg'],
-            'problem': get_first_dict_by_key(chatlog, 'problem')['msg'],
-        })
-        #self.memory.save_context(problem_statement.text, solution)
-        return psedo_code['text']
+        psedo_code: dict = chain.invoke(
+            input={
+                "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
+                "pseudo_code": get_first_dict_by_key(chatlog, "pseudo_code")["msg"],
+                "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
+            }
+        )
+        # self.memory.save_context(problem_statement.text, solution)
+        return psedo_code["text"]
 
 
 def get_first_dict_by_key(chat_log, key):
     for entry in chat_log:
-        if entry['key'] == key:
+        if entry["key"] == key:
             return entry
     return None

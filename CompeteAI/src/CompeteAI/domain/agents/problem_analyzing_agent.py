@@ -1,8 +1,9 @@
 import os
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts.chat import ChatPromptTemplate
+
 import langchain
 from langchain.chains.llm import LLMChain
+from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
 
 from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.infra.memory.memory import CustomMemory
@@ -21,9 +22,12 @@ class ProblemAnalyzingAgent:
 
     def analyze_problem(self, problem_statement: ProblemStatement) -> str:
         langchain.verbose = True
-        #context = self.memory.load_context()
-        prompt = ChatPromptTemplate.from_messages([
-            ('system', """# 命令書:
+        # context = self.memory.load_context()
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """# 命令書:
 あなたはアルゴリズム問題の専門家です。以下の制約条件と入力文をもとに複数の分析を出力してください。
 
 * 問題文から、求められている最終的な解答内容を特定せよ
@@ -33,11 +37,16 @@ class ProblemAnalyzingAgent:
 
 # 制約条件:
 * 解答が問題から自明な場合でも出力しないこと
-* 時間制限が特にない場合、２秒以内での解答を制約条件とせよm 
-"""),
-            ('user', f"""# 入力文：
-{problem_statement.text}"""),
-        ])
+* 時間制限が特にない場合、２秒以内での解答を制約条件とせよ
+""",
+                ),
+                (
+                    "user",
+                    f"""# 入力文：
+{problem_statement.text}""",
+                ),
+            ]
+        )
 
         chain = LLMChain(
             prompt=prompt,
@@ -47,5 +56,5 @@ class ProblemAnalyzingAgent:
         )
 
         solution: dict = chain.invoke(input={})
-        #self.memory.save_context(problem_statement.text, solution)
-        return solution['text']
+        # self.memory.save_context(problem_statement.text, solution)
+        return solution["text"]
