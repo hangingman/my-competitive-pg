@@ -1,5 +1,6 @@
 import streamlit as st
 
+from CompeteAI.domain.agents.coder_agent import CoderAgent
 from CompeteAI.domain.agents.problem_analyzing_agent import ProblemAnalyzingAgent
 from CompeteAI.domain.agents.problem_solver_agent import ProblemSolverAgent
 from CompeteAI.domain.models.problem_statement import ProblemStatement
@@ -31,7 +32,6 @@ def main():
             st.write(problem)
             st.session_state.chat_log.append({"name": 'user', 'key': 'problem', "msg": problem})
 
-        # 問題を分析
         with st.chat_message('assistant'):
             problem_statement = ProblemStatement(problem)
             agent = ProblemAnalyzingAgent()
@@ -46,6 +46,13 @@ def main():
             st.header('疑似コード:')
             st.write(pseudo_code)
             st.session_state.chat_log.append({"name": 'assistant', 'key': 'pseudo_code', "msg": pseudo_code, 'header': '疑似コード'})
+
+        with st.chat_message('assistant'):
+            agent = CoderAgent()
+            code = agent.solve(st.session_state.chat_log)
+            st.header('実コード:')
+            st.write(code)
+            st.session_state.chat_log.append({"name": 'assistant', 'key': 'code', "msg": code, 'header': 'コード'})
 
 
 if __name__ == "__main__":

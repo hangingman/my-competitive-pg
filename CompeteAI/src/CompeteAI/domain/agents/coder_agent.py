@@ -8,7 +8,7 @@ from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.infra.memory.memory import CustomMemory
 
 
-class ProblemSolverAgent:
+class CoderAgent:
     def __init__(self, tool=None):
         self.tool = tool
         api_key = os.getenv("OPENAI_API_KEY")
@@ -24,14 +24,11 @@ class ProblemSolverAgent:
         #context = self.memory.load_context()
         prompt = ChatPromptTemplate.from_messages([
             ('system', """# 命令書:
-あなたはアルゴリズムと数学に長けたアルゴリズム専門家です。
-以下の制約条件と問題文をもとにアルゴリズムを検討し疑似コードを出力せよ。
+あなたはアルゴリズムと数学に長けた最高のプログラマーです。以下の疑似コードをもとにRubyコードを出力せよ。
 
-# 制約条件:
-* コードの効率性を最優先し、できるだけ計算量を抑えた解法を提出してください。
-* 疑似コードのプログラミング言語は指定がなければPythonで書いてください
 """),
             ('system', """{analysis}"""),
+            ('system', """{pseudo_code}"""),
             ('user', """# 入力文：
 {problem}"""),
         ])
@@ -45,6 +42,7 @@ class ProblemSolverAgent:
 
         psedo_code: dict = chain.invoke(input={
             'analysis': get_first_dict_by_key(chatlog, 'analysis')['msg'],
+            'pseudo_code': get_first_dict_by_key(chatlog, 'pseudo_code')['msg'],
             'problem': get_first_dict_by_key(chatlog, 'problem')['msg'],
         })
         #self.memory.save_context(problem_statement.text, solution)
