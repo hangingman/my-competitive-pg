@@ -98,6 +98,8 @@ multidict==6.0.5
     # via
     #   aiohttp
     #   yarl
+ndjson==0.3.1
+    # via wandbox-api
 numpy==1.26.4
     # via
     #   altair
@@ -149,6 +151,7 @@ pyyaml==6.0.1
     # via
     #   langchain
     #   langchain-core
+    #   wandbox-api
 referencing==0.35.1
     # via
     #   jsonschema
@@ -161,6 +164,7 @@ requests==2.32.3
     #   langsmith
     #   streamlit
     #   tiktoken
+    #   wandbox-api
 rich==13.7.1
     # via streamlit
 rpds-py==0.18.1
@@ -188,7 +192,9 @@ tenacity==8.3.0
 tiktoken==0.7.0
     # via langchain-openai
 toml==0.10.2
-    # via streamlit
+    # via
+    #   streamlit
+    #   wandbox-api
 toolz==0.12.1
     # via altair
 tornado==6.4.1
@@ -207,6 +213,8 @@ tzdata==2024.1
     # via pandas
 urllib3==2.2.1
     # via requests
+wandbox-api==0.10.0
+    # via -r requirements.in
 watchdog==4.0.1
     # via streamlit
 yarl==1.9.4

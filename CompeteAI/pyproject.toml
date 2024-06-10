@@ -19,3 +19,6 @@ optional-dependencies.dev = { file = ["requirements-dev.in"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest_env]
+OPENAI_API_KEY = "how bout i do anyway?"

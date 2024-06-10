@@ -3,3 +3,4 @@ playwright
 langchain-core==0.2.3
 langchain-openai==0.1.8
 langchain==0.2.1
+wandbox-api

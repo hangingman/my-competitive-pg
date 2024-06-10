@@ -6,6 +6,7 @@ from CompeteAI.domain.agents.problem_analyzing_agent import \
 from CompeteAI.domain.agents.problem_solver_agent import ProblemSolverAgent
 from CompeteAI.domain.models.algorithm_candidate import AlgorithmCandidates
 from CompeteAI.domain.models.problem_statement import ProblemStatement
+from CompeteAI.domain.models.source_code import SourceCode
 
 
 def main():
@@ -63,27 +64,33 @@ def main():
 
         with st.chat_message("assistant"):
             # TODO: ここから木構造的に分岐する, ref: TCMS
-            agent = ProblemSolverAgent()
+            agent: ProblemSolverAgent = ProblemSolverAgent()
             candidates: AlgorithmCandidates = agent.solve(st.session_state.chat_log)
-            st.header("疑似コード:")
-            st.write(candidates)
-            st.session_state.chat_log.append(
-                {
-                    "name": "assistant",
-                    "key": "pseudo_code",
-                    "msg": candidates,
-                    "header": "疑似コード",
-                }
-            )
 
-        # with st.chat_message("assistant"):
-        #     agent = CoderAgent()
-        #     code = agent.solve(st.session_state.chat_log)
-        #     st.header("実コード:")
-        #     st.write(code)
-        #     st.session_state.chat_log.append(
-        #         {"name": "assistant", "key": "code", "msg": code, "header": "コード"}
-        #     )
+            for candidate in candidates:
+                st.header("擬似コード:")
+                st.write(candidate)
+                st.session_state.chat_log.append(
+                    {
+                        "name": "assistant",
+                        "key": "pseudo_code",
+                        "msg": candidates,
+                        "header": "擬似コード",
+                    }
+                )
+
+                coder: CoderAgent = CoderAgent()
+                code: SourceCode = coder.solve(st.session_state.chat_log)
+                st.header("実コード:")
+                st.code(code.source_code, language="ruby", line_numbers=False)
+                st.session_state.chat_log.append(
+                    {
+                        "name": "assistant",
+                        "key": "code",
+                        "msg": code,
+                        "header": "コード",
+                    }
+                )
 
 
 if __name__ == "__main__":
