@@ -71,6 +71,7 @@ class CoderAgent:
         code: SourceCode = parser.parse(ans["text"])
 
         with tempfile.NamedTemporaryFile(suffix=".rb") as temp_source:
+            eprint(code.source_code)
             temp_source.write(bytes(code.source_code, 'utf-8'))
             temp_source.flush()
             self.wandbox_run(opt=["-l=Ruby", "run", temp_source.name])

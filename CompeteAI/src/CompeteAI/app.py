@@ -65,16 +65,16 @@ def main():
         with st.chat_message("assistant"):
             # TODO: ここから木構造的に分岐する, ref: TCMS
             agent: ProblemSolverAgent = ProblemSolverAgent()
-            candidates: AlgorithmCandidates = agent.solve(st.session_state.chat_log)
+            algos: AlgorithmCandidates = agent.solve(st.session_state.chat_log)
 
-            for candidate in candidates:
+            for candidate in algos.candidates:
                 st.header("擬似コード:")
                 st.write(candidate)
                 st.session_state.chat_log.append(
                     {
                         "name": "assistant",
                         "key": "pseudo_code",
-                        "msg": candidates,
+                        "msg": candidate,
                         "header": "擬似コード",
                     }
                 )
