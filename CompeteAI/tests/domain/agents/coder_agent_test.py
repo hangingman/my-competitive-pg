@@ -1,6 +1,7 @@
+import tempfile
+
 import pytest
 from wandbox import cli as wandbox_cli
-import tempfile
 
 from CompeteAI.domain.agents.coder_agent import CoderAgent
 
@@ -27,4 +28,3 @@ def test_wandbox_run(input_opt, expected_opt, mocker):
 
         expected_opt.append(temp_source.name)
         wandbox_cli.CLI.execute_with_args.assert_called_once_with(expected_opt)
-

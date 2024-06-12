@@ -12,20 +12,24 @@ from langchain_openai import ChatOpenAI
 
 from CompeteAI.domain.models.algorithm_candidate import AlgorithmCandidates
 from CompeteAI.infra.memory.memory import CustomMemory
+from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class ProblemSolverAgent:
-    def __init__(self, tool=None):
+    def __init__(self, handler: StreamHandler, tool=None):
         self.tool = tool
         self.llm = ChatOpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             model_name="gpt-4-turbo",
             temperature=0.8,
+            streaming=True,
+            callbacks=[handler],
         )
         self.func_llm = ChatOpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             model_name="gpt-3.5-turbo",
             temperature=0.0,
+            streaming=False,
         )
 
         self.memory = CustomMemory(llm=self.llm)

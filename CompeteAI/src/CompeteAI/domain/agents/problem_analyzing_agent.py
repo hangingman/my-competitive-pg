@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import langchain
 from langchain.chains.llm import LLMChain
@@ -7,20 +8,25 @@ from langchain_openai import ChatOpenAI
 
 from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.infra.memory.memory import CustomMemory
+from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class ProblemAnalyzingAgent:
-    def __init__(self, tool=None):
+    def __init__(self, handler: StreamHandler, tool=None):
         self.tool = tool
         api_key = os.getenv("OPENAI_API_KEY")
         self.llm = ChatOpenAI(
             api_key=api_key,
             model_name="gpt-4-turbo",
             temperature=0.0,
+            streaming=True,
+            callbacks=[handler],
         )
         self.memory = CustomMemory(llm=self.llm)
 
-    def analyze_problem(self, problem_statement: ProblemStatement) -> str:
+    def analyze_problem(
+        self, problem_statement: ProblemStatement, display_area: Any
+    ) -> str:
         langchain.verbose = True
         # context = self.memory.load_context()
         prompt = ChatPromptTemplate.from_messages(
