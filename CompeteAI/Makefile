@@ -37,6 +37,7 @@ format:
 	black src/CompeteAI/ tests/ && \
 	isort src/CompeteAI/ tests/
 
+# pytest -s
 test:
 	$(activate_venv) && \
-	pytest tests/
+	pytest -s tests/

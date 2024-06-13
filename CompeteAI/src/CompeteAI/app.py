@@ -74,8 +74,8 @@ def main():
             agent: ProblemSolverAgent = ProblemSolverAgent(handler=handler)
             algos: AlgorithmCandidates = agent.solve(st.session_state.chat_log)
 
-            for candidate in algos.candidates:
-                st.header("擬似コード:")
+            for i, candidate in enumerate(algos.candidates):
+                st.header(f"擬似コード#{i+1}:")
                 st.write(candidate.description)
                 st.code(candidate.pseudo_code)
 
@@ -88,7 +88,7 @@ def main():
                     }
                 )
 
-                st.header("実コード:")
+                st.header(f"実コード{i+1}:")
                 code_area = st.empty()
                 handler = StreamHandler(code_area)
                 coder: CoderAgent = CoderAgent(handler=handler)

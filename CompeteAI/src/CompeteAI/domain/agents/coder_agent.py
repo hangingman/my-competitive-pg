@@ -17,7 +17,7 @@ from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class CoderAgent:
-    def __init__(self, handler: StreamHandler):
+    def __init__(self, handler: StreamHandler = None):
         self.llm = ChatOpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             model_name="gpt-4-turbo",
@@ -28,9 +28,14 @@ class CoderAgent:
         self.memory = CustomMemory(llm=self.llm)
 
     def wandbox_run(self, opt: list[str]):
-        cli = wandbox_cli.CLI()
-        eprint(opt)
-        cli.execute_with_args(opt)
+        try:
+            cli = wandbox_cli.CLI()
+            eprint(opt)
+            cli.execute_with_args(opt)
+        except SystemExit as e:
+            exit_code = e.code
+            eprint(f"ExitException caught with code: {exit_code}")
+            eprint(exit_code)
 
     def solve(self, chatlog: []) -> SourceCode:
         langchain.verbose = True
