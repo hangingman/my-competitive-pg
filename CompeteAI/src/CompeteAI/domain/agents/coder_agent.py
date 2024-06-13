@@ -4,29 +4,38 @@ import tempfile
 
 import langchain
 from langchain.chains.llm import LLMChain
-from langchain_core.prompts.chat import ChatPromptTemplate, SystemMessagePromptTemplate
-from langchain_core.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts.chat import (ChatPromptTemplate,
+                                         SystemMessagePromptTemplate)
 from langchain_openai import ChatOpenAI
 from wandbox import cli as wandbox_cli
 
 from CompeteAI.domain.models.source_code import SourceCode
 from CompeteAI.infra.memory.memory import CustomMemory
+from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class CoderAgent:
-    def __init__(self):
+    def __init__(self, handler: StreamHandler = None):
         self.llm = ChatOpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             model_name="gpt-4-turbo",
             temperature=0.0,
+            streaming=False,
+            # callbacks=[handler],
         )
         self.memory = CustomMemory(llm=self.llm)
 
     def wandbox_run(self, opt: list[str]):
-        cli = wandbox_cli.CLI()
-        eprint(opt)
-        cli.execute_with_args(opt)
+        try:
+            cli = wandbox_cli.CLI()
+            eprint(opt)
+            cli.execute_with_args(opt)
+        except SystemExit as e:
+            exit_code = e.code
+            eprint(f"ExitException caught with code: {exit_code}")
+            eprint(exit_code)
 
     def solve(self, chatlog: []) -> SourceCode:
         langchain.verbose = True
@@ -72,7 +81,7 @@ class CoderAgent:
 
         with tempfile.NamedTemporaryFile(suffix=".rb") as temp_source:
             eprint(code.source_code)
-            temp_source.write(bytes(code.source_code, 'utf-8'))
+            temp_source.write(bytes(code.source_code, "utf-8"))
             temp_source.flush()
             self.wandbox_run(opt=["-l=Ruby", "run", temp_source.name])
 

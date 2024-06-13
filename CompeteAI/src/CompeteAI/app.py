@@ -7,6 +7,7 @@ from CompeteAI.domain.agents.problem_solver_agent import ProblemSolverAgent
 from CompeteAI.domain.models.algorithm_candidate import AlgorithmCandidates
 from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.domain.models.source_code import SourceCode
+from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 def main():
@@ -48,11 +49,13 @@ def main():
             )
 
         with st.chat_message("assistant"):
-            problem_statement = ProblemStatement(problem)
-            agent = ProblemAnalyzingAgent()
-            analysis = agent.analyze_problem(problem_statement)
             st.header("分析結果:")
-            st.write(analysis)
+            display_area = st.empty()
+            handler = StreamHandler(display_area)
+
+            problem_statement = ProblemStatement(problem)
+            agent: ProblemAnalyzingAgent = ProblemAnalyzingAgent(handler=handler)
+            analysis = agent.analyze_problem(problem_statement, display_area)
             st.session_state.chat_log.append(
                 {
                     "name": "assistant",
@@ -64,12 +67,18 @@ def main():
 
         with st.chat_message("assistant"):
             # TODO: ここから木構造的に分岐する, ref: TCMS
-            agent: ProblemSolverAgent = ProblemSolverAgent()
+            st.header("アルゴリズム検討:")
+            display_area = st.empty()
+            handler = StreamHandler(display_area)
+
+            agent: ProblemSolverAgent = ProblemSolverAgent(handler=handler)
             algos: AlgorithmCandidates = agent.solve(st.session_state.chat_log)
 
-            for candidate in algos.candidates:
-                st.header("擬似コード:")
-                st.write(candidate)
+            for i, candidate in enumerate(algos.candidates):
+                st.header(f"擬似コード#{i+1}:")
+                st.write(candidate.description)
+                st.code(candidate.pseudo_code)
+
                 st.session_state.chat_log.append(
                     {
                         "name": "assistant",
@@ -79,10 +88,13 @@ def main():
                     }
                 )
 
-                coder: CoderAgent = CoderAgent()
+                st.header(f"実コード{i+1}:")
+                code_area = st.empty()
+                handler = StreamHandler(code_area)
+                coder: CoderAgent = CoderAgent(handler=handler)
                 code: SourceCode = coder.solve(st.session_state.chat_log)
-                st.header("実コード:")
                 st.code(code.source_code, language="ruby", line_numbers=False)
+
                 st.session_state.chat_log.append(
                     {
                         "name": "assistant",

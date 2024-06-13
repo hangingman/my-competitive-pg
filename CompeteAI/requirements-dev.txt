@@ -25,6 +25,7 @@ mypy==1.10.0
     # via -r requirements-dev.in
 mypy-extensions==1.0.0
     # via
+    #   -c requirements.txt
     #   black
     #   mypy
 packaging==23.2
