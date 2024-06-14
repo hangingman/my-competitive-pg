@@ -48,7 +48,8 @@ class CoderAgent:
                 template="""# 命令書:
         * あなたはアルゴリズムと数学に長けた最高のプログラマーです。入力文の擬似コードをもとにRubyコードを出力せよ。
         * ソースコードの説明とソースコード自体をJSONで出力すること
-        * 解答内容に沿った出力を出すこと
+        * ソースコードの実装上、解答は必ず標準出力に出すこと
+        * インプットは標準入力(STDIN)に渡されることを想定せよ
 
         {format_instructions}
         # 制約条件:
@@ -78,13 +79,6 @@ class CoderAgent:
         )
         # self.memory.save_context(problem_statement.text, solution)
         code: SourceCode = parser.parse(ans["text"])
-
-        with tempfile.NamedTemporaryFile(suffix=".rb") as temp_source:
-            eprint(code.source_code)
-            temp_source.write(bytes(code.source_code, "utf-8"))
-            temp_source.flush()
-            self.wandbox_run(opt=["-l=Ruby", "run", temp_source.name])
-
         return code
 
 

@@ -1,12 +1,15 @@
 import streamlit as st
 
 from CompeteAI.domain.agents.coder_agent import CoderAgent
+from CompeteAI.domain.agents.knowledge_provider_agent import KnowledgeProviderAgent
 from CompeteAI.domain.agents.problem_analyzing_agent import \
     ProblemAnalyzingAgent
 from CompeteAI.domain.agents.problem_solver_agent import ProblemSolverAgent
+from CompeteAI.domain.agents.tester_agent import TesterAgent
 from CompeteAI.domain.models.algorithm_candidate import AlgorithmCandidates
 from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.domain.models.source_code import SourceCode
+from CompeteAI.domain.models.test_case import TestCases
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
@@ -49,7 +52,7 @@ def main():
             )
 
         with st.chat_message("assistant"):
-            st.header("分析結果:")
+            st.header("問題の理解と定義:")
             display_area = st.empty()
             handler = StreamHandler(display_area)
 
@@ -66,6 +69,29 @@ def main():
             )
 
         with st.chat_message("assistant"):
+            st.header("既存の知識や関連問題の探索:")
+            display_area = st.empty()
+            handler = StreamHandler(display_area)
+
+            agent: KnowledgeProviderAgent = KnowledgeProviderAgent(handler=handler)
+            knowledge: str = agent.solve(st.session_state.chat_log)
+            st.session_state.chat_log.append(
+                {
+                    "name": "assistant",
+                    "key": "knowledge",
+                    "msg": knowledge,
+                    "header": "既存の知識",
+                }
+            )
+
+        with st.chat_message("assistant"):
+            st.header("テストケース生成:")
+            test_area = st.empty()
+            handler = StreamHandler(test_area)
+            tester: TesterAgent = TesterAgent(handler=handler)
+            test_cases: TestCases = tester.gen_test_case(st.session_state.chat_log)
+
+        with st.chat_message("assistant"):
             # TODO: ここから木構造的に分岐する, ref: TCMS
             st.header("アルゴリズム検討:")
             display_area = st.empty()
@@ -75,7 +101,7 @@ def main():
             algos: AlgorithmCandidates = agent.solve(st.session_state.chat_log)
 
             for i, candidate in enumerate(algos.candidates):
-                st.header(f"擬似コード#{i+1}:")
+                st.header(f"擬似コード#{i + 1}:")
                 st.write(candidate.description)
                 st.code(candidate.pseudo_code)
 
@@ -88,13 +114,12 @@ def main():
                     }
                 )
 
-                st.header(f"実コード{i+1}:")
+                st.header(f"実コード{i + 1}:")
                 code_area = st.empty()
                 handler = StreamHandler(code_area)
                 coder: CoderAgent = CoderAgent(handler=handler)
                 code: SourceCode = coder.solve(st.session_state.chat_log)
                 st.code(code.source_code, language="ruby", line_numbers=False)
-
                 st.session_state.chat_log.append(
                     {
                         "name": "assistant",
@@ -103,6 +128,13 @@ def main():
                         "header": "コード",
                     }
                 )
+
+                st.header(f"テスト実行{i + 1}:")
+                test_area = st.empty()
+                handler = StreamHandler(test_area)
+                tester: TesterAgent = TesterAgent(handler=handler)
+                results: list[str] = tester.test(st.session_state.chat_log, test_cases, code)
+                st.code('\n'.join(results))
 
 
 if __name__ == "__main__":

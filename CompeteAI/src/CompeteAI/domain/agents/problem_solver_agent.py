@@ -64,8 +64,8 @@ class ProblemSolverAgent:
         )
         analysis_prompt = SystemMessagePromptTemplate(
             prompt=PromptTemplate(
-                template="{analysis}\n",
-                input_variables=["analysis"],
+                template="{analysis}\n{knowledge}\n",
+                input_variables=["analysis", "knowledge"],
             )
         )
         problem_prompt = HumanMessagePromptTemplate(
@@ -109,11 +109,12 @@ class ProblemSolverAgent:
 
         chains = SequentialChain(
             chains=[think_chain, format_chain],
-            input_variables=["analysis", "problem"],
+            input_variables=["analysis", "knowledge", "problem"],
         )
         ans = chains.invoke(
             {
                 "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
+                "knowledge": get_first_dict_by_key(chatlog, "knowledge")["msg"],
                 "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
             }
         )
