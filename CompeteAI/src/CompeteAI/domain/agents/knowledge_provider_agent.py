@@ -1,8 +1,8 @@
-import langchain
 from langchain.chains.llm import LLMChain
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
-                                         SystemMessagePromptTemplate, HumanMessagePromptTemplate)
+                                         HumanMessagePromptTemplate,
+                                         SystemMessagePromptTemplate)
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.llm_type import LLMType
@@ -18,12 +18,10 @@ class KnowledgeProviderAgent:
             handler=handler,
             model_name=llm.default_model_name(),
             temperature=0.3,
-            streaming=True,
         )
         self.memory = CustomMemory(llm=self.llm)
 
-    def solve(self, chatlog: []) -> str:
-        langchain.verbose = True
+    def solve(self, chatlog: [], streaming: bool = True) -> str:
         # context = self.memory.load_context()
 
         # アルゴリズムの候補を考えるchain
@@ -58,18 +56,27 @@ class KnowledgeProviderAgent:
 
         chain = LLMChain(
             prompt=ChatPromptTemplate.from_messages([knowledge_prompt, problem_prompt]),
-            # output_key="algorithm_candidates",
             llm=self.llm,
             verbose=True,
         )
 
-        ans = chain.invoke(
-            {
-                "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
-                "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
-            }
-        )
-        return ans["text"]
+        llm_input = {
+            "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
+            "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
+        }
+        if streaming:
+            # Streamを使用して出力を逐次処理
+            input_text = "\n".join(
+                [f"{key}: {value}" for key, value in llm_input.items()]
+            )
+            ans: str = "".join(
+                [chunk.content for chunk in chain.llm.stream(input=input_text)]
+            )
+            return ans
+        else:
+            # 通常の方法で呼び出し
+            ans: dict = chain.invoke(input=llm_input)
+            return ans["text"]
 
 
 def get_first_dict_by_key(chat_log, key):

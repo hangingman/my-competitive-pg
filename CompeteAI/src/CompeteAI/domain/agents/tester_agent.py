@@ -4,12 +4,12 @@ import sys
 import tempfile
 from typing import Generator, Tuple
 
-import langchain
 from langchain.chains.llm import LLMChain
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
-                                         SystemMessagePromptTemplate, HumanMessagePromptTemplate)
+                                         HumanMessagePromptTemplate,
+                                         SystemMessagePromptTemplate)
 from wandbox import cli as wandbox_cli
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
@@ -25,9 +25,8 @@ class TesterAgent:
         self.llm = LLMFactory.create_llm(
             llm_type=llm,
             handler=handler,
-            model_name=llm.default_light_model_name(),
+            model_name=llm.light_model_name(),
             temperature=0.0,
-            streaming=False,
         )
         self.memory = CustomMemory(llm=self.llm)
 
@@ -43,8 +42,7 @@ class TesterAgent:
             eprint(exit_code)
             return c_stdout.getvalue() + "\n" + c_stderr.getvalue()
 
-    def gen_test_case(self, chatlog: []) -> TestCases:
-        langchain.verbose = True
+    def gen_test_case(self, chatlog: [], streaming: bool = True) -> TestCases:
         # context = self.memory.load_context()
         parser = PydanticOutputParser(pydantic_object=TestCases)
 
@@ -77,11 +75,20 @@ class TesterAgent:
             # memory=memory,
         )
 
-        ans: dict = chain.invoke(
-            input={"problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
-        )
-        # self.memory.save_context(problem_statement.text, solution)
-        return parser.parse(ans["text"])
+        llm_input = {"problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
+        if streaming:
+            # Streamを使用して出力を逐次処理
+            input_text = "\n".join(
+                [f"{key}: {value}" for key, value in llm_input.items()]
+            )
+            ans: str = "".join(
+                [chunk.content for chunk in chain.llm.stream(input=input_text)]
+            )
+            return parser.parse(ans)
+        else:
+            # 通常の方法で呼び出し
+            ans: dict = chain.invoke(input=llm_input)
+            return parser.parse(ans["text"])
 
     def test(self, chatlog: [], test_cases: TestCases, code: SourceCode) -> list[str]:
         results: list[str] = []

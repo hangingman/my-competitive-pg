@@ -1,4 +1,3 @@
-import langchain
 from langchain.chains.llm import LLMChain
 from langchain.chains.sequential import SequentialChain
 from langchain.output_parsers import PydanticOutputParser
@@ -22,23 +21,20 @@ class ProblemSolverAgent:
             handler=handler,
             model_name=llm.default_model_name(),
             temperature=0.8,
-            streaming=True,
         )
-        self.llm = LLMFactory.create_llm(
+        self.func_llm = LLMFactory.create_llm(
             llm_type=llm,
             handler=handler,
-            model_name=llm.default_light_model_name(),
+            model_name=llm.light_model_name(),
             temperature=0.0,
-            streaming=False,
         )
         self.memory = CustomMemory(llm=self.llm)
-        self.parser = PydanticOutputParser(
+
+    def solve(self, chatlog: [], streaming: bool = True) -> AlgorithmCandidates:
+        # context = self.memory.load_context()
+        parser = PydanticOutputParser(
             pydantic_object=AlgorithmCandidates
         )  # 出力用にOutputParserを定義する
-
-    def solve(self, chatlog: []) -> AlgorithmCandidates:
-        langchain.verbose = True
-        # context = self.memory.load_context()
 
         # アルゴリズムの候補を考えるchain
         system_prompt = SystemMessagePromptTemplate(
@@ -87,7 +83,7 @@ class ProblemSolverAgent:
 """,
                 input_variables=["algorithm_candidates"],
                 partial_variables={
-                    "format_instructions": self.parser.get_format_instructions()
+                    "format_instructions": parser.get_format_instructions()
                 },
             )
         )
@@ -110,14 +106,25 @@ class ProblemSolverAgent:
             chains=[think_chain, format_chain],
             input_variables=["analysis", "knowledge", "problem"],
         )
-        ans = chains.invoke(
-            {
-                "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
-                "knowledge": get_first_dict_by_key(chatlog, "knowledge")["msg"],
-                "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
-            }
-        )
-        return self.parser.parse(ans["text"])
+
+        llm_input = {
+            "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
+            "knowledge": get_first_dict_by_key(chatlog, "knowledge")["msg"],
+            "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
+        }
+        if streaming:
+            # Streamを使用して出力を逐次処理
+            input_text = "\n".join(
+                [f"{key}: {value}" for key, value in llm_input.items()]
+            )
+            ans: str = "".join(
+                [chunk.content for chunk in chains.llm.stream(input=input_text)]
+            )
+            return parser.parse(ans)
+        else:
+            # 通常の方法で呼び出し
+            ans: dict = chains.invoke(input=llm_input)
+            return parser.parse(ans["text"])
 
 
 def get_first_dict_by_key(chat_log, key):

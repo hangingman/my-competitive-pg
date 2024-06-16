@@ -13,7 +13,7 @@ class LLMType(Enum):
         else:
             raise ValueError(f"Unsupported LLM type: {self}")
 
-    def default_light_model_name(self):
+    def light_model_name(self):
         if self == LLMType.OPENAI:
             return "gpt-3.5-turbo"
         elif self == LLMType.GOOGLE:

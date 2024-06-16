@@ -1,6 +1,3 @@
-from typing import Any
-
-import langchain
 from langchain.chains.llm import LLMChain
 from langchain_core.prompts.chat import ChatPromptTemplate
 
@@ -19,14 +16,14 @@ class ProblemAnalyzingAgent:
             handler=handler,
             model_name=llm.default_model_name(),
             temperature=0.0,
-            streaming=True,
         )
         self.memory = CustomMemory(llm=self.llm)
 
     def analyze_problem(
-        self, problem_statement: ProblemStatement, display_area: Any
+        self,
+        problem_statement: ProblemStatement,
+        streaming: bool = True,
     ) -> str:
-        langchain.verbose = True
         # context = self.memory.load_context()
         prompt = ChatPromptTemplate.from_messages(
             [
@@ -60,6 +57,11 @@ class ProblemAnalyzingAgent:
             # memory=memory,
         )
 
-        solution: dict = chain.invoke(input={})
-        # self.memory.save_context(problem_statement.text, solution)
-        return solution["text"]
+        if streaming:
+            # Streamを使用して出力を逐次処理
+            ans: str = "".join([chunk.content for chunk in chain.llm.stream("")])
+            return ans
+        else:
+            # 通常の方法で呼び出し
+            ans: dict = chain.invoke(input={})
+            return ans["text"]

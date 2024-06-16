@@ -1,6 +1,5 @@
 import sys
 
-import langchain
 from langchain.chains.llm import LLMChain
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -22,7 +21,6 @@ class CoderAgent:
             handler=handler,
             model_name=llm.default_model_name(),
             temperature=0.0,
-            streaming=False,
         )
         self.memory = CustomMemory(llm=self.llm)
 
@@ -36,8 +34,7 @@ class CoderAgent:
             eprint(f"ExitException caught with code: {exit_code}")
             eprint(exit_code)
 
-    def solve(self, chatlog: []) -> SourceCode:
-        langchain.verbose = True
+    def solve(self, chatlog: [], streaming: bool = True) -> SourceCode:
         # context = self.memory.load_context()
         parser = PydanticOutputParser(pydantic_object=SourceCode)
 
@@ -70,15 +67,23 @@ class CoderAgent:
             # memory=memory,
         )
 
-        ans: dict = chain.invoke(
-            input={
-                "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
-                "pseudo_code": get_first_dict_by_key(chatlog, "pseudo_code")["msg"],
-            }
-        )
-        # self.memory.save_context(problem_statement.text, solution)
-        code: SourceCode = parser.parse(ans["text"])
-        return code
+        llm_input = {
+            "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
+            "pseudo_code": get_first_dict_by_key(chatlog, "pseudo_code")["msg"],
+        }
+        if streaming:
+            # Streamを使用して出力を逐次処理
+            input_text = "\n".join(
+                [f"{key}: {value}" for key, value in llm_input.items()]
+            )
+            ans: str = "".join(
+                [chunk.content for chunk in chain.llm.stream(input=input_text)]
+            )
+            return parser.parse(ans)
+        else:
+            # 通常の方法で呼び出し
+            ans: dict = chain.invoke(input=llm_input)
+            return parser.parse(ans["text"])
 
 
 def get_first_dict_by_key(chat_log, key):

@@ -1,6 +1,7 @@
 import os
 from typing import Union
 
+import langchain
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 
@@ -17,15 +18,14 @@ class LLMFactory:
         handler: StreamHandler,
         model_name: str,
         temperature: float = 0.0,
-        streaming: bool = True,
     ) -> Union[ChatOpenAI, ChatGoogleGenerativeAI]:
+        langchain.verbose = True
 
         if llm_type == LLMType.OPENAI:
             return ChatOpenAI(
                 api_key=os.getenv("OPENAI_API_KEY"),
                 model_name=model_name,
                 temperature=temperature,
-                streaming=streaming,
                 callbacks=[handler],
             )
         elif llm_type == LLMType.GOOGLE:
@@ -33,7 +33,6 @@ class LLMFactory:
                 google_api_key=os.getenv("GOOGLE_API_KEY"),
                 model=model_name,
                 temperature=temperature,
-                streaming=streaming,
                 callbacks=[handler],
             )
         else:
