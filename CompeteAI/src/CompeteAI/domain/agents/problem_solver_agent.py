@@ -1,5 +1,3 @@
-import os
-
 import langchain
 from langchain.chains.llm import LLMChain
 from langchain.chains.sequential import SequentialChain
@@ -8,30 +6,31 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
-from langchain_openai import ChatOpenAI
 
+from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.algorithm_candidate import AlgorithmCandidates
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class ProblemSolverAgent:
-    def __init__(self, handler: StreamHandler, tool=None):
+    def __init__(self, llm: LLMType, handler: StreamHandler, tool=None):
         self.tool = tool
-        self.llm = ChatOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model_name="gpt-4-turbo",
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.default_model_name(),
             temperature=0.8,
             streaming=True,
-            callbacks=[handler],
         )
-        self.func_llm = ChatOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model_name="gpt-3.5-turbo",
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.default_light_model_name(),
             temperature=0.0,
             streaming=False,
         )
-
         self.memory = CustomMemory(llm=self.llm)
         self.parser = PydanticOutputParser(
             pydantic_object=AlgorithmCandidates

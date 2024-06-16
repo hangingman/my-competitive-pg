@@ -1,6 +1,4 @@
-import os
 import sys
-import tempfile
 
 import langchain
 from langchain.chains.llm import LLMChain
@@ -8,22 +6,23 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          SystemMessagePromptTemplate)
-from langchain_openai import ChatOpenAI
 from wandbox import cli as wandbox_cli
 
+from CompeteAI.domain.factory.llm_factory import LLMFactory
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.domain.models.source_code import SourceCode
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class CoderAgent:
-    def __init__(self, handler: StreamHandler = None):
-        self.llm = ChatOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model_name="gpt-4-turbo",
+    def __init__(self, llm: LLMType, handler: StreamHandler = None):
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.default_model_name(),
             temperature=0.0,
             streaming=False,
-            # callbacks=[handler],
         )
         self.memory = CustomMemory(llm=self.llm)
 

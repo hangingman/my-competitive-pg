@@ -1,12 +1,16 @@
+import argparse
+
 import streamlit as st
 
 from CompeteAI.domain.agents.coder_agent import CoderAgent
-from CompeteAI.domain.agents.knowledge_provider_agent import KnowledgeProviderAgent
+from CompeteAI.domain.agents.knowledge_provider_agent import \
+    KnowledgeProviderAgent
 from CompeteAI.domain.agents.problem_analyzing_agent import \
     ProblemAnalyzingAgent
 from CompeteAI.domain.agents.problem_solver_agent import ProblemSolverAgent
 from CompeteAI.domain.agents.tester_agent import TesterAgent
 from CompeteAI.domain.models.algorithm_candidate import AlgorithmCandidates
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.domain.models.source_code import SourceCode
 from CompeteAI.domain.models.test_case import TestCases
@@ -14,6 +18,16 @@ from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 def main():
+    parser = argparse.ArgumentParser(description="使用するLLMを選択")
+    parser.add_argument(
+        "--llm",
+        type=LLMType,
+        choices=list(LLMType),
+        required=True,
+        help="使用するLLMを選択",
+    )
+    args = parser.parse_args()
+
     st.title("CompeteAI: Competitive Programming with LLM")
     st.write(
         "CompeteAI へようこそ。問題解決を開始し、LLM からリアルタイムのフィードバックを受け取りましょう。"
@@ -57,7 +71,9 @@ def main():
             handler = StreamHandler(display_area)
 
             problem_statement = ProblemStatement(problem)
-            agent: ProblemAnalyzingAgent = ProblemAnalyzingAgent(handler=handler)
+            agent: ProblemAnalyzingAgent = ProblemAnalyzingAgent(
+                llm=args.llm, handler=handler
+            )
             analysis = agent.analyze_problem(problem_statement, display_area)
             st.session_state.chat_log.append(
                 {
@@ -73,7 +89,9 @@ def main():
             display_area = st.empty()
             handler = StreamHandler(display_area)
 
-            agent: KnowledgeProviderAgent = KnowledgeProviderAgent(handler=handler)
+            agent: KnowledgeProviderAgent = KnowledgeProviderAgent(
+                llm=args.llm, handler=handler
+            )
             knowledge: str = agent.solve(st.session_state.chat_log)
             st.session_state.chat_log.append(
                 {
@@ -88,7 +106,7 @@ def main():
             st.header("テストケース生成:")
             test_area = st.empty()
             handler = StreamHandler(test_area)
-            tester: TesterAgent = TesterAgent(handler=handler)
+            tester: TesterAgent = TesterAgent(llm=args.llm, handler=handler)
             test_cases: TestCases = tester.gen_test_case(st.session_state.chat_log)
 
         with st.chat_message("assistant"):
@@ -97,7 +115,9 @@ def main():
             display_area = st.empty()
             handler = StreamHandler(display_area)
 
-            agent: ProblemSolverAgent = ProblemSolverAgent(handler=handler)
+            agent: ProblemSolverAgent = ProblemSolverAgent(
+                llm=args.llm, handler=handler
+            )
             algos: AlgorithmCandidates = agent.solve(st.session_state.chat_log)
 
             for i, candidate in enumerate(algos.candidates):
@@ -117,7 +137,7 @@ def main():
                 st.header(f"実コード{i + 1}:")
                 code_area = st.empty()
                 handler = StreamHandler(code_area)
-                coder: CoderAgent = CoderAgent(handler=handler)
+                coder: CoderAgent = CoderAgent(llm=args.llm, handler=handler)
                 code: SourceCode = coder.solve(st.session_state.chat_log)
                 st.code(code.source_code, language="ruby", line_numbers=False)
                 st.session_state.chat_log.append(
@@ -132,9 +152,11 @@ def main():
                 st.header(f"テスト実行{i + 1}:")
                 test_area = st.empty()
                 handler = StreamHandler(test_area)
-                tester: TesterAgent = TesterAgent(handler=handler)
-                results: list[str] = tester.test(st.session_state.chat_log, test_cases, code)
-                st.code('\n'.join(results))
+                tester: TesterAgent = TesterAgent(llm=args.llm, handler=handler)
+                results: list[str] = tester.test(
+                    st.session_state.chat_log, test_cases, code
+                )
+                st.code("\n".join(results))
 
 
 if __name__ == "__main__":

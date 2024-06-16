@@ -1,26 +1,25 @@
-import os
 from typing import Any
 
 import langchain
 from langchain.chains.llm import LLMChain
 from langchain_core.prompts.chat import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 
+from CompeteAI.domain.factory.llm_factory import LLMFactory
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class ProblemAnalyzingAgent:
-    def __init__(self, handler: StreamHandler, tool=None):
+    def __init__(self, llm: LLMType, handler: StreamHandler, tool=None):
         self.tool = tool
-        api_key = os.getenv("OPENAI_API_KEY")
-        self.llm = ChatOpenAI(
-            api_key=api_key,
-            model_name="gpt-4-turbo",
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.default_model_name(),
             temperature=0.0,
             streaming=True,
-            callbacks=[handler],
         )
         self.memory = CustomMemory(llm=self.llm)
 

@@ -1,19 +1,19 @@
 import contextlib
 import io
-import os
 import sys
 import tempfile
-from typing import Tuple, Generator
+from typing import Generator, Tuple
 
 import langchain
 from langchain.chains.llm import LLMChain
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
-                                         SystemMessagePromptTemplate)
-from langchain_openai import ChatOpenAI
+                                         SystemMessagePromptTemplate, HumanMessagePromptTemplate)
 from wandbox import cli as wandbox_cli
 
+from CompeteAI.domain.factory.llm_factory import LLMFactory
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.domain.models.source_code import SourceCode
 from CompeteAI.domain.models.test_case import TestCases
 from CompeteAI.infra.memory.memory import CustomMemory
@@ -21,13 +21,13 @@ from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class TesterAgent:
-    def __init__(self, handler: StreamHandler = None):
-        self.llm = ChatOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model_name="gpt-3.5-turbo",
+    def __init__(self, llm: LLMType, handler: StreamHandler = None):
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.default_light_model_name(),
             temperature=0.0,
             streaming=False,
-            # callbacks=[handler],
         )
         self.memory = CustomMemory(llm=self.llm)
 
@@ -41,7 +41,7 @@ class TesterAgent:
             exit_code = e.code
             eprint(f"ExitException caught with code: {exit_code}")
             eprint(exit_code)
-            return c_stdout.getvalue() + '\n' + c_stderr.getvalue()
+            return c_stdout.getvalue() + "\n" + c_stderr.getvalue()
 
     def gen_test_case(self, chatlog: []) -> TestCases:
         langchain.verbose = True
@@ -56,25 +56,29 @@ class TesterAgent:
         * 入力文にテストケースが存在しない場合空のJSONを返すこと
 
         {format_instructions}
-        # 入力文:
-        {problem}
         """,
-                input_variables=["problem"],
+                input_variables=[],
                 partial_variables={
                     "format_instructions": parser.get_format_instructions()
                 },
             )
         )
+        problem_prompt = HumanMessagePromptTemplate(
+            prompt=PromptTemplate(
+                template="""# 入力文：\n{problem}""",
+                input_variables=["problem"],
+            )
+        )
 
         chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages([test_case_prompt]),
+            prompt=ChatPromptTemplate.from_messages([test_case_prompt, problem_prompt]),
             llm=self.llm,
             verbose=True,
             # memory=memory,
         )
 
-        ans: dict = chain.invoke(input={
-            "problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
+        ans: dict = chain.invoke(
+            input={"problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
         )
         # self.memory.save_context(problem_statement.text, solution)
         return parser.parse(ans["text"])
@@ -97,7 +101,15 @@ class TesterAgent:
                 eprint(code.source_code)
                 temp_source.write(bytes(code.source_code, "utf-8"))
                 temp_source.flush()
-                ret = self.__wandbox_run(opt=["-l=Ruby", "--stdin", f"\"{case.input}\"", "run", temp_source.name])
+                ret = self.__wandbox_run(
+                    opt=[
+                        "-l=Ruby",
+                        "--stdin",
+                        f'"{case.input}"',
+                        "run",
+                        temp_source.name,
+                    ]
+                )
                 results.append(ret)
 
         return results
@@ -116,7 +128,7 @@ def eprint(*args, **kwargs):
 
 @contextlib.contextmanager
 def capture_output() -> Generator[Tuple[io.StringIO, io.StringIO], None, None]:
-    """ 一時的に標準出力と標準エラー出力をキャプチャする関数 """
+    """一時的に標準出力と標準エラー出力をキャプチャする関数"""
     stdout = io.StringIO()
     stderr = io.StringIO()
     with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):

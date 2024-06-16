@@ -1,27 +1,25 @@
-import os
-
 import langchain
 from langchain.chains.llm import LLMChain
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
-                                         SystemMessagePromptTemplate)
-from langchain_openai import ChatOpenAI
+                                         SystemMessagePromptTemplate, HumanMessagePromptTemplate)
 
+from CompeteAI.domain.factory.llm_factory import LLMFactory
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class KnowledgeProviderAgent:
-    def __init__(self, handler: StreamHandler, tool=None):
+    def __init__(self, llm: LLMType, handler: StreamHandler, tool=None):
         self.tool = tool
-        self.llm = ChatOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model_name="gpt-4-turbo",
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.default_model_name(),
             temperature=0.3,
             streaming=True,
-            callbacks=[handler],
         )
-
         self.memory = CustomMemory(llm=self.llm)
 
     def solve(self, chatlog: []) -> str:
@@ -51,17 +49,23 @@ class KnowledgeProviderAgent:
                 input_variables=["analysis"],
             )
         )
+        problem_prompt = HumanMessagePromptTemplate(
+            prompt=PromptTemplate(
+                template="""# 入力文：\n{problem}""",
+                input_variables=["problem"],
+            )
+        )
+
         chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages(
-                [knowledge_prompt]
-            ),
-            #output_key="algorithm_candidates",
+            prompt=ChatPromptTemplate.from_messages([knowledge_prompt, problem_prompt]),
+            # output_key="algorithm_candidates",
             llm=self.llm,
             verbose=True,
         )
 
         ans = chain.invoke(
             {
+                "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
                 "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
             }
         )
