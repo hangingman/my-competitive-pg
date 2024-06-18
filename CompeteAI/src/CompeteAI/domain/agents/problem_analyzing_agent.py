@@ -1,5 +1,6 @@
 from langchain.chains.llm import LLMChain
-from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_core.prompts.chat import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.llm_type import LLMType
@@ -27,9 +28,9 @@ class ProblemAnalyzingAgent:
         # context = self.memory.load_context()
         prompt = ChatPromptTemplate.from_messages(
             [
-                (
-                    "system",
-                    """# 命令書:
+                SystemMessagePromptTemplate(
+                    prompt=PromptTemplate(
+                        template="""# 命令書:
 あなたはアルゴリズム問題の専門家です。以下の制約条件と入力文をもとに複数の分析を出力してください。
 
 * 問題文から、求められている最終的な解答内容を特定せよ
@@ -38,14 +39,18 @@ class ProblemAnalyzingAgent:
 * 入力文を要約し、問題の全体像を簡潔に説明せよ
 
 # 制約条件:
+* 回答は日本語で行うこと
 * 解答が問題から自明な場合でも出力しないこと
 * 時間制限が特にない場合、２秒以内での解答を制約条件とせよ
 """,
+                        input_variables=[],
+                    )
                 ),
-                (
-                    "user",
-                    f"""# 入力文：
-{problem_statement.text}""",
+                HumanMessagePromptTemplate(
+                    prompt=PromptTemplate(
+                        template="""# 入力文：\n{problem}""",
+                        input_variables=["problem"],
+                    )
                 ),
             ]
         )
@@ -57,11 +62,19 @@ class ProblemAnalyzingAgent:
             # memory=memory,
         )
 
+        llm_input = {
+            "problem": problem_statement.text,
+        }
         if streaming:
-            # Streamを使用して出力を逐次処理
-            ans: str = "".join([chunk.content for chunk in chain.llm.stream("")])
+            # streamを使用して出力を逐次処理
+            input_text = "\n".join(
+                [f"{key}: {value}" for key, value in llm_input.items()]
+            )
+            ans: str = "".join(
+                [chunk.content for chunk in chain.llm.stream(input=input_text)]
+            )
             return ans
         else:
             # 通常の方法で呼び出し
-            ans: dict = chain.invoke(input={})
+            ans: dict = chain.invoke(input=llm_input)
             return ans["text"]
