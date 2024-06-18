@@ -5,6 +5,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
+from langchain_core.output_parsers import StrOutputParser
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.algorithm_candidate import AlgorithmCandidates
@@ -70,6 +72,9 @@ class ProblemSolverAgent:
                 input_variables=["problem"],
             )
         )
+        think_prompt = ChatPromptTemplate.from_messages(
+            [system_prompt, analysis_prompt, problem_prompt]
+        )
 
         # JSONにフォーマットするchain
         instruction_prompt = SystemMessagePromptTemplate(
@@ -78,52 +83,52 @@ class ProblemSolverAgent:
 * 以下の制約条件をもとに入力文をJSONに変換せよ
 * JSONのみを出力すること、「```json ...<snip>... ```」のような記法は不要
 {format_instructions}
-
-# 入力文:
-{algorithm_candidates}
 """,
-                input_variables=["algorithm_candidates"],
+                input_variables=[],
                 partial_variables={
                     "format_instructions": parser.get_format_instructions()
                 },
             )
         )
-
-        think_chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages(
-                [system_prompt, analysis_prompt, problem_prompt]
-            ),
-            output_key="algorithm_candidates",
-            llm=self.llm,
-            verbose=True,
-        )
-        format_chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages([instruction_prompt]),
-            llm=self.func_llm,
-            verbose=True,
+        algo_candidate_prompt = HumanMessagePromptTemplate(
+            prompt=PromptTemplate(
+                template="""# 入力文：\n{problem}""",
+                input_variables=["problem"],
+            )
         )
 
-        chains = SequentialChain(
-            chains=[think_chain, format_chain],
-            input_variables=["analysis", "knowledge", "problem"],
-        )
+        format_prompt = ChatPromptTemplate.from_messages([instruction_prompt, algo_candidate_prompt])
 
         llm_input = {
             "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
             "knowledge": get_first_dict_by_key(chatlog, "knowledge")["msg"],
             "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
         }
+
         if streaming:
             # Streamを使用して出力を逐次処理
-            input_text = "\n".join(
-                [f"{key}: {value}" for key, value in llm_input.items()]
-            )
+            chains = think_prompt | format_prompt | self.llm | StrOutputParser()
             ans: str = "".join(
-                [chunk.content for chunk in chains.llm.stream(input=input_text)]
+                [chunk for chunk in chains.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
             )
             return parser.parse(ans)
         else:
             # 通常の方法で呼び出し
+            think_chain = LLMChain(
+                prompt=think_prompt,
+                output_key="algorithm_candidates",
+                llm=self.llm,
+                verbose=True,
+            )
+            format_chain = LLMChain(
+                prompt=format_prompt,
+                llm=self.func_llm,
+                verbose=True,
+            )
+            chains = SequentialChain(
+                chains=[think_chain, format_chain],
+                input_variables=["analysis", "knowledge", "problem"],
+            )
             ans: dict = chains.invoke(input=llm_input)
             return parser.parse(ans["text"])
 

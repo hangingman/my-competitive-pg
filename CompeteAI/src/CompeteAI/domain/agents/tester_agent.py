@@ -10,6 +10,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
+from langchain_core.output_parsers import StrOutputParser
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from wandbox import cli as wandbox_cli
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
@@ -68,25 +70,19 @@ class TesterAgent:
             )
         )
 
-        chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages([test_case_prompt, problem_prompt]),
-            llm=self.llm,
-            verbose=True,
-            # memory=memory,
-        )
-
+        prompt = ChatPromptTemplate.from_messages([test_case_prompt, problem_prompt])
         llm_input = {"problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
+
         if streaming:
             # Streamを使用して出力を逐次処理
-            input_text = "\n".join(
-                [f"{key}: {value}" for key, value in llm_input.items()]
-            )
+            chain = prompt | self.llm | StrOutputParser()
             ans: str = "".join(
-                [chunk.content for chunk in chain.llm.stream(input=input_text)]
+                [chunk for chunk in chain.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
             )
             return parser.parse(ans)
         else:
             # 通常の方法で呼び出し
+            chain = LLMChain(prompt=prompt, llm=self.llm, verbose=True)
             ans: dict = chain.invoke(input=llm_input)
             return parser.parse(ans["text"])
 

@@ -5,6 +5,8 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          SystemMessagePromptTemplate)
+from langchain_core.output_parsers import StrOutputParser
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from wandbox import cli as wandbox_cli
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
@@ -39,7 +41,7 @@ class CoderAgent:
         parser = PydanticOutputParser(pydantic_object=SourceCode)
 
         # ソースコードを生成しJSONにフォーマットするchain
-        source_code_prompt = SystemMessagePromptTemplate(
+        source_code_prompt_template = SystemMessagePromptTemplate(
             prompt=PromptTemplate(
                 template="""# 命令書:
         * あなたはアルゴリズムと数学に長けた最高のプログラマーです。入力文の擬似コードをもとにRubyコードを出力せよ。
@@ -60,28 +62,22 @@ class CoderAgent:
             )
         )
 
-        chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages([source_code_prompt]),
-            llm=self.llm,
-            verbose=True,
-            # memory=memory,
-        )
-
+        prompt = ChatPromptTemplate.from_messages([source_code_prompt_template])
         llm_input = {
             "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
             "pseudo_code": get_first_dict_by_key(chatlog, "pseudo_code")["msg"],
         }
+
         if streaming:
             # Streamを使用して出力を逐次処理
-            input_text = "\n".join(
-                [f"{key}: {value}" for key, value in llm_input.items()]
-            )
+            chain = prompt | self.llm | StrOutputParser()
             ans: str = "".join(
-                [chunk.content for chunk in chain.llm.stream(input=input_text)]
+                [chunk for chunk in chain.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
             )
             return parser.parse(ans)
         else:
             # 通常の方法で呼び出し
+            chain = LLMChain(prompt=prompt, llm=self.llm, verbose=True)
             ans: dict = chain.invoke(input=llm_input)
             return parser.parse(ans["text"])
 

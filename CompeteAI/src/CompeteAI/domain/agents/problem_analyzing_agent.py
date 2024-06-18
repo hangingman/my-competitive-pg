@@ -1,6 +1,8 @@
 from langchain.chains.llm import LLMChain
 from langchain_core.prompts.chat import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.llm_type import LLMType
@@ -55,26 +57,22 @@ class ProblemAnalyzingAgent:
             ]
         )
 
-        chain = LLMChain(
-            prompt=prompt,
-            llm=self.llm,
-            verbose=True,
-            # memory=memory,
-        )
-
         llm_input = {
             "problem": problem_statement.text,
         }
         if streaming:
-            # streamを使用して出力を逐次処理
-            input_text = "\n".join(
-                [f"{key}: {value}" for key, value in llm_input.items()]
-            )
+            # LCEL記法でprompt | model | output parserみたいに書く
+            # ref: https://python.langchain.com/v0.1/docs/expression_language/streaming/
+            parser = StrOutputParser()
+            chain = prompt | self.llm | parser
+            # streamを使用して出力を逐次処理, debug logを出すためにconfigを渡す必要がある
+            # ref: https://qiita.com/isanakamishiro2/items/37ea6ac2049bf23e8405
             ans: str = "".join(
-                [chunk.content for chunk in chain.llm.stream(input=input_text)]
+                [chunk for chunk in chain.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
             )
             return ans
         else:
             # 通常の方法で呼び出し
+            chain = LLMChain(prompt=prompt, llm=self.llm, verbose=True)
             ans: dict = chain.invoke(input=llm_input)
             return ans["text"]

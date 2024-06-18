@@ -3,6 +3,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
+from langchain_core.output_parsers import StrOutputParser
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.llm_type import LLMType
@@ -55,27 +57,22 @@ class KnowledgeProviderAgent:
             )
         )
 
-        chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages([knowledge_prompt, problem_prompt]),
-            llm=self.llm,
-            verbose=True,
-        )
-
+        prompt = ChatPromptTemplate.from_messages([knowledge_prompt, problem_prompt])
         llm_input = {
             "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
             "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
         }
         if streaming:
             # Streamを使用して出力を逐次処理
-            input_text = "\n".join(
-                [f"{key}: {value}" for key, value in llm_input.items()]
-            )
+            parser = StrOutputParser()
+            chain = prompt | self.llm | parser
             ans: str = "".join(
-                [chunk.content for chunk in chain.llm.stream(input=input_text)]
+                [chunk for chunk in chain.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
             )
             return ans
         else:
             # 通常の方法で呼び出し
+            chain = LLMChain(prompt=prompt, llm=self.llm, verbose=True)
             ans: dict = chain.invoke(input=llm_input)
             return ans["text"]
 
