@@ -16,7 +16,7 @@ from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class ProblemSolverAgent:
-    def __init__(self, llm: LLMType, handler: StreamHandler, tool=None):
+    def __init__(self, llm: LLMType, handler: StreamHandler = None, tool=None):
         self.tool = tool
         self.llm = LLMFactory.create_llm(
             llm_type=llm,
@@ -84,7 +84,7 @@ class ProblemSolverAgent:
 * JSONのみを出力すること、「```json ...<snip>... ```」のような記法は不要
 {format_instructions}
 """,
-                input_variables=[],
+                input_variables=["algorithm_candidates"],  # TODO: 上でoutput variableを設定する
                 partial_variables={
                     "format_instructions": parser.get_format_instructions()
                 },

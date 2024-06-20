@@ -4,7 +4,7 @@ from langchain.chains.llm import LLMChain
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
-                                         SystemMessagePromptTemplate)
+                                         SystemMessagePromptTemplate, HumanMessagePromptTemplate)
 from langchain_core.output_parsers import StrOutputParser
 from langchain.callbacks.tracers import ConsoleCallbackHandler
 from wandbox import cli as wandbox_cli
@@ -50,19 +50,27 @@ class CoderAgent:
         * インプットは標準入力(STDIN)に渡されることを想定せよ
 
         {format_instructions}
-        # 制約条件:
-        {analysis}
-        # 入力文:
-        {pseudo_code}
         """,
-                input_variables=["analysis", "pseudo_code"],
+                input_variables=[],
                 partial_variables={
                     "format_instructions": parser.get_format_instructions()
                 },
             )
         )
+        analysis_prompt = HumanMessagePromptTemplate(
+            prompt=PromptTemplate(
+                template="""# 制約条件：\n{analysis}""",
+                input_variables=["analysis"],
+            )
+        )
+        pseudo_code_prompt = HumanMessagePromptTemplate(
+            prompt=PromptTemplate(
+                template="""# 入力文：\n{pseudo_code}""",
+                input_variables=["pseudo_code"],
+            )
+        )
 
-        prompt = ChatPromptTemplate.from_messages([source_code_prompt_template])
+        prompt = ChatPromptTemplate.from_messages([source_code_prompt_template, analysis_prompt, pseudo_code_prompt])
         llm_input = {
             "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
             "pseudo_code": get_first_dict_by_key(chatlog, "pseudo_code")["msg"],
