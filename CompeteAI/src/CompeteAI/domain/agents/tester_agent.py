@@ -1,33 +1,35 @@
 import contextlib
 import io
-import os
 import sys
 import tempfile
-from typing import Tuple, Generator
+from typing import Generator, Tuple
 
-import langchain
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.llm import LLMChain
 from langchain.output_parsers import PydanticOutputParser
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
+                                         HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
-from langchain_openai import ChatOpenAI
+from langchain_core.prompts.few_shot import FewShotChatMessagePromptTemplate
 from wandbox import cli as wandbox_cli
 
+from CompeteAI.domain.factory.llm_factory import LLMFactory
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.domain.models.source_code import SourceCode
-from CompeteAI.domain.models.test_case import TestCases
+from CompeteAI.domain.models.test_case import TestCase, TestCases
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class TesterAgent:
-    def __init__(self, handler: StreamHandler = None):
-        self.llm = ChatOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model_name="gpt-3.5-turbo",
+    def __init__(self, llm: LLMType, handler: StreamHandler = None):
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.light_model_name(),
             temperature=0.0,
-            streaming=False,
-            # callbacks=[handler],
         )
         self.memory = CustomMemory(llm=self.llm)
 
@@ -41,10 +43,9 @@ class TesterAgent:
             exit_code = e.code
             eprint(f"ExitException caught with code: {exit_code}")
             eprint(exit_code)
-            return c_stdout.getvalue() + '\n' + c_stderr.getvalue()
+            return c_stdout.getvalue() + "\n" + c_stderr.getvalue()
 
-    def gen_test_case(self, chatlog: []) -> TestCases:
-        langchain.verbose = True
+    def gen_test_case(self, chatlog: [], streaming: bool = True) -> TestCases:
         # context = self.memory.load_context()
         parser = PydanticOutputParser(pydantic_object=TestCases)
 
@@ -52,32 +53,95 @@ class TesterAgent:
             prompt=PromptTemplate(
                 template="""# 命令書:
         * あなたは最高のQAエンジニアです。入力文をもとにテストケースを生成せよ。
+        * 問題に記載されたテストケースのみを使うこと。
         * テストケースをJSONで出力すること
-        * 入力文にテストケースが存在しない場合空のJSONを返すこと
+        * 入力文に明確なテストケースが存在しない場合空のJSONを返すこと
 
         {format_instructions}
-        # 入力文:
-        {problem}
         """,
-                input_variables=["problem"],
+                input_variables=[],
                 partial_variables={
                     "format_instructions": parser.get_format_instructions()
                 },
             )
         )
+        few_shot_prompt = FewShotChatMessagePromptTemplate(
+            examples=[
+                {
+                    "question": "10001 番目の素数を求めよ.",
+                    "answer": TestCases(cases=[]).json(),
+                },
+                {
+                    "question": "1/3 と 1/2 の間に何個の分数があるか?",
+                    "answer": TestCases(cases=[]).json(),
+                },
+                {
+                    "question": """入力例 1
+2
+3 1 4 1 5 9
 
-        chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages([test_case_prompt]),
-            llm=self.llm,
-            verbose=True,
-            # memory=memory,
+出力例 1
+1
+
+入力例 2
+1
+1 2 3
+
+出力例 2
+-1
+
+入力例 3
+3
+8 2 2 7 4 6 5 3 8
+
+出力例 3
+5""",
+                    "answer": TestCases(
+                        cases=[
+                            TestCase(input="""2\n3 1 4 1 5 9""", answer="1"),
+                            TestCase(input="""1\n1 2 3""", answer="-1"),
+                            TestCase(input="""3\n8 2 2 7 4 6 5 3 8""", answer="5"),
+                        ]
+                    ).json(),
+                },
+            ],
+            example_prompt=ChatPromptTemplate.from_messages(
+                [
+                    ("human", "{question}"),
+                    ("ai", "{answer}"),
+                ]
+            ),
+        )
+        problem_prompt = HumanMessagePromptTemplate(
+            prompt=PromptTemplate(
+                template="""# 入力文：\n{problem}""",
+                input_variables=["problem"],
+            )
         )
 
-        ans: dict = chain.invoke(input={
-            "problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
+        prompt = ChatPromptTemplate.from_messages(
+            [test_case_prompt, few_shot_prompt, problem_prompt]
         )
-        # self.memory.save_context(problem_statement.text, solution)
-        return parser.parse(ans["text"])
+        llm_input = {"problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
+
+        if streaming:
+            # Streamを使用して出力を逐次処理
+            chain = prompt | self.llm | StrOutputParser()
+            ans: str = "".join(
+                [
+                    chunk
+                    for chunk in chain.stream(
+                        input=llm_input,
+                        config={"callbacks": [ConsoleCallbackHandler()]},
+                    )
+                ]
+            )
+            return parser.parse(ans)
+        else:
+            # 通常の方法で呼び出し
+            chain = LLMChain(prompt=prompt, llm=self.llm, verbose=True)
+            ans: dict = chain.invoke(input=llm_input)
+            return parser.parse(ans["text"])
 
     def test(self, chatlog: [], test_cases: TestCases, code: SourceCode) -> list[str]:
         results: list[str] = []
@@ -97,7 +161,15 @@ class TesterAgent:
                 eprint(code.source_code)
                 temp_source.write(bytes(code.source_code, "utf-8"))
                 temp_source.flush()
-                ret = self.__wandbox_run(opt=["-l=Ruby", "--stdin", f"\"{case.input}\"", "run", temp_source.name])
+                ret = self.__wandbox_run(
+                    opt=[
+                        "-l=Ruby",
+                        "--stdin",
+                        f'"{case.input}"',
+                        "run",
+                        temp_source.name,
+                    ]
+                )
                 results.append(ret)
 
         return results
@@ -116,7 +188,7 @@ def eprint(*args, **kwargs):
 
 @contextlib.contextmanager
 def capture_output() -> Generator[Tuple[io.StringIO, io.StringIO], None, None]:
-    """ 一時的に標準出力と標準エラー出力をキャプチャする関数 """
+    """一時的に標準出力と標準エラー出力をキャプチャする関数"""
     stdout = io.StringIO()
     stderr = io.StringIO()
     with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):

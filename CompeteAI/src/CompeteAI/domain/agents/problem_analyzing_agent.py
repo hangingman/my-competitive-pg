@@ -1,39 +1,40 @@
-import os
-from typing import Any
-
-import langchain
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.llm import LLMChain
-from langchain_core.prompts.chat import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts.chat import (ChatPromptTemplate,
+                                         HumanMessagePromptTemplate,
+                                         SystemMessagePromptTemplate)
 
+from CompeteAI.domain.factory.llm_factory import LLMFactory
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.domain.models.problem_statement import ProblemStatement
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class ProblemAnalyzingAgent:
-    def __init__(self, handler: StreamHandler, tool=None):
+    def __init__(self, llm: LLMType, handler: StreamHandler, tool=None):
         self.tool = tool
-        api_key = os.getenv("OPENAI_API_KEY")
-        self.llm = ChatOpenAI(
-            api_key=api_key,
-            model_name="gpt-4-turbo",
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.default_model_name(),
             temperature=0.0,
-            streaming=True,
-            callbacks=[handler],
         )
         self.memory = CustomMemory(llm=self.llm)
 
     def analyze_problem(
-        self, problem_statement: ProblemStatement, display_area: Any
+        self,
+        problem_statement: ProblemStatement,
+        streaming: bool = True,
     ) -> str:
-        langchain.verbose = True
         # context = self.memory.load_context()
         prompt = ChatPromptTemplate.from_messages(
             [
-                (
-                    "system",
-                    """# 命令書:
+                SystemMessagePromptTemplate(
+                    prompt=PromptTemplate(
+                        template="""# 命令書:
 あなたはアルゴリズム問題の専門家です。以下の制約条件と入力文をもとに複数の分析を出力してください。
 
 * 問題文から、求められている最終的な解答内容を特定せよ
@@ -42,25 +43,44 @@ class ProblemAnalyzingAgent:
 * 入力文を要約し、問題の全体像を簡潔に説明せよ
 
 # 制約条件:
+* 回答は日本語で行うこと
 * 解答が問題から自明な場合でも出力しないこと
 * 時間制限が特にない場合、２秒以内での解答を制約条件とせよ
 """,
+                        input_variables=[],
+                    )
                 ),
-                (
-                    "user",
-                    f"""# 入力文：
-{problem_statement.text}""",
+                HumanMessagePromptTemplate(
+                    prompt=PromptTemplate(
+                        template="""# 入力文：\n{problem}""",
+                        input_variables=["problem"],
+                    )
                 ),
             ]
         )
 
-        chain = LLMChain(
-            prompt=prompt,
-            llm=self.llm,
-            verbose=True,
-            # memory=memory,
-        )
-
-        solution: dict = chain.invoke(input={})
-        # self.memory.save_context(problem_statement.text, solution)
-        return solution["text"]
+        llm_input = {
+            "problem": problem_statement.text,
+        }
+        if streaming:
+            # LCEL記法でprompt | model | output parserみたいに書く
+            # ref: https://python.langchain.com/v0.1/docs/expression_language/streaming/
+            parser = StrOutputParser()
+            chain = prompt | self.llm | parser
+            # streamを使用して出力を逐次処理, debug logを出すためにconfigを渡す必要がある
+            # ref: https://qiita.com/isanakamishiro2/items/37ea6ac2049bf23e8405
+            ans: str = "".join(
+                [
+                    chunk
+                    for chunk in chain.stream(
+                        input=llm_input,
+                        config={"callbacks": [ConsoleCallbackHandler()]},
+                    )
+                ]
+            )
+            return ans
+        else:
+            # 通常の方法で呼び出し
+            chain = LLMChain(prompt=prompt, llm=self.llm, verbose=True)
+            ans: dict = chain.invoke(input=llm_input)
+            return ans["text"]

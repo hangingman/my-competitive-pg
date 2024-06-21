@@ -1,31 +1,29 @@
-import os
-
-import langchain
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.llm import LLMChain
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
+                                         HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
-from langchain_openai import ChatOpenAI
 
+from CompeteAI.domain.factory.llm_factory import LLMFactory
+from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
 
 class KnowledgeProviderAgent:
-    def __init__(self, handler: StreamHandler, tool=None):
+    def __init__(self, llm: LLMType, handler: StreamHandler, tool=None):
         self.tool = tool
-        self.llm = ChatOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model_name="gpt-4-turbo",
+        self.llm = LLMFactory.create_llm(
+            llm_type=llm,
+            handler=handler,
+            model_name=llm.default_model_name(),
             temperature=0.3,
-            streaming=True,
-            callbacks=[handler],
         )
-
         self.memory = CustomMemory(llm=self.llm)
 
-    def solve(self, chatlog: []) -> str:
-        langchain.verbose = True
+    def solve(self, chatlog: [], streaming: bool = True) -> str:
         # context = self.memory.load_context()
 
         # アルゴリズムの候補を考えるchain
@@ -43,6 +41,7 @@ class KnowledgeProviderAgent:
 5. 未知のものに着目し、同じまたは類似の未知のものを持つ、使い慣れた問題について考えよ
 
 # 制約条件:
+* 回答は日本語で行うこと
 * 観点５つはグループ分けせず箇条書きで簡潔に文章を提案せよ
 
 # 問題文の分析:
@@ -51,21 +50,37 @@ class KnowledgeProviderAgent:
                 input_variables=["analysis"],
             )
         )
-        chain = LLMChain(
-            prompt=ChatPromptTemplate.from_messages(
-                [knowledge_prompt]
-            ),
-            #output_key="algorithm_candidates",
-            llm=self.llm,
-            verbose=True,
+        problem_prompt = HumanMessagePromptTemplate(
+            prompt=PromptTemplate(
+                template="""# 入力文：\n{problem}""",
+                input_variables=["problem"],
+            )
         )
 
-        ans = chain.invoke(
-            {
-                "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
-            }
-        )
-        return ans["text"]
+        prompt = ChatPromptTemplate.from_messages([knowledge_prompt, problem_prompt])
+        llm_input = {
+            "problem": get_first_dict_by_key(chatlog, "problem")["msg"],
+            "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
+        }
+        if streaming:
+            # Streamを使用して出力を逐次処理
+            parser = StrOutputParser()
+            chain = prompt | self.llm | parser
+            ans: str = "".join(
+                [
+                    chunk
+                    for chunk in chain.stream(
+                        input=llm_input,
+                        config={"callbacks": [ConsoleCallbackHandler()]},
+                    )
+                ]
+            )
+            return ans
+        else:
+            # 通常の方法で呼び出し
+            chain = LLMChain(prompt=prompt, llm=self.llm, verbose=True)
+            ans: dict = chain.invoke(input=llm_input)
+            return ans["text"]
 
 
 def get_first_dict_by_key(chat_log, key):
