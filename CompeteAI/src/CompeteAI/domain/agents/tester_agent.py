@@ -4,20 +4,21 @@ import sys
 import tempfile
 from typing import Generator, Tuple
 
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.llm import LLMChain
 from langchain.output_parsers import PydanticOutputParser
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
-from langchain_core.output_parsers import StrOutputParser
-from langchain.callbacks.tracers import ConsoleCallbackHandler
+from langchain_core.prompts.few_shot import FewShotChatMessagePromptTemplate
 from wandbox import cli as wandbox_cli
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.domain.models.source_code import SourceCode
-from CompeteAI.domain.models.test_case import TestCases
+from CompeteAI.domain.models.test_case import TestCases, TestCase
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
@@ -52,6 +53,7 @@ class TesterAgent:
             prompt=PromptTemplate(
                 template="""# 命令書:
         * あなたは最高のQAエンジニアです。入力文をもとにテストケースを生成せよ。
+        * 問題に記載されたテストケースのみを使うこと。
         * テストケースをJSONで出力すること
         * 入力文に明確なテストケースが存在しない場合空のJSONを返すこと
 
@@ -63,6 +65,49 @@ class TesterAgent:
                 },
             )
         )
+        few_shot_prompt = FewShotChatMessagePromptTemplate(
+            examples=[
+                {
+                    "question": "10001 番目の素数を求めよ.",
+                    "answer": TestCases(cases=[]).json()
+                },
+                {
+                    "question": "1/3 と 1/2 の間に何個の分数があるか?",
+                    "answer": TestCases(cases=[]).json()
+                },
+                {
+                    "question": """入力例 1
+2
+3 1 4 1 5 9
+
+出力例 1
+1
+
+入力例 2
+1
+1 2 3
+
+出力例 2
+-1
+
+入力例 3
+3
+8 2 2 7 4 6 5 3 8
+
+出力例 3
+5""",
+                    "answer": TestCases(cases=[
+                        TestCase(input="""2\n3 1 4 1 5 9""", answer="1"),
+                        TestCase(input="""1\n1 2 3""", answer="-1"),
+                        TestCase(input="""3\n8 2 2 7 4 6 5 3 8""", answer="5")
+                    ]).json()
+                }
+            ],
+            example_prompt=ChatPromptTemplate.from_messages([
+                ('human', '{question}'),
+                ('ai', '{answer}'),
+            ]),
+        )
         problem_prompt = HumanMessagePromptTemplate(
             prompt=PromptTemplate(
                 template="""# 入力文：\n{problem}""",
@@ -70,7 +115,7 @@ class TesterAgent:
             )
         )
 
-        prompt = ChatPromptTemplate.from_messages([test_case_prompt, problem_prompt])
+        prompt = ChatPromptTemplate.from_messages([test_case_prompt, few_shot_prompt, problem_prompt])
         llm_input = {"problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
 
         if streaming:
