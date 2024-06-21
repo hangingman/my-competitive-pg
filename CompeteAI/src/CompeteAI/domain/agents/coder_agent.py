@@ -1,12 +1,13 @@
 import sys
 
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.llm import LLMChain
 from langchain.output_parsers import PydanticOutputParser
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
-                                         SystemMessagePromptTemplate, HumanMessagePromptTemplate)
-from langchain_core.output_parsers import StrOutputParser
-from langchain.callbacks.tracers import ConsoleCallbackHandler
+                                         HumanMessagePromptTemplate,
+                                         SystemMessagePromptTemplate)
 from wandbox import cli as wandbox_cli
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
@@ -70,7 +71,9 @@ class CoderAgent:
             )
         )
 
-        prompt = ChatPromptTemplate.from_messages([source_code_prompt_template, analysis_prompt, pseudo_code_prompt])
+        prompt = ChatPromptTemplate.from_messages(
+            [source_code_prompt_template, analysis_prompt, pseudo_code_prompt]
+        )
         llm_input = {
             "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
             "pseudo_code": get_first_dict_by_key(chatlog, "pseudo_code")["msg"],
@@ -80,7 +83,13 @@ class CoderAgent:
             # Streamを使用して出力を逐次処理
             chain = prompt | self.llm | StrOutputParser()
             ans: str = "".join(
-                [chunk for chunk in chain.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
+                [
+                    chunk
+                    for chunk in chain.stream(
+                        input=llm_input,
+                        config={"callbacks": [ConsoleCallbackHandler()]},
+                    )
+                ]
             )
             return parser.parse(ans)
         else:

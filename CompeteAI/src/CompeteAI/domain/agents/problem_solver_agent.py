@@ -1,12 +1,12 @@
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.llm import LLMChain
 from langchain.chains.sequential import SequentialChain
 from langchain.output_parsers import PydanticOutputParser
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
-from langchain_core.output_parsers import StrOutputParser
-from langchain.callbacks.tracers import ConsoleCallbackHandler
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.algorithm_candidate import AlgorithmCandidates
@@ -84,7 +84,9 @@ class ProblemSolverAgent:
 * JSONのみを出力すること、「```json ...<snip>... ```」のような記法は不要
 {format_instructions}
 """,
-                input_variables=["algorithm_candidates"],  # TODO: 上でoutput variableを設定する
+                input_variables=[
+                    "algorithm_candidates"
+                ],
                 partial_variables={
                     "format_instructions": parser.get_format_instructions()
                 },
@@ -97,7 +99,9 @@ class ProblemSolverAgent:
             )
         )
 
-        format_prompt = ChatPromptTemplate.from_messages([instruction_prompt, algo_candidate_prompt])
+        format_prompt = ChatPromptTemplate.from_messages(
+            [instruction_prompt, algo_candidate_prompt]
+        )
 
         llm_input = {
             "analysis": get_first_dict_by_key(chatlog, "analysis")["msg"],
@@ -109,7 +113,13 @@ class ProblemSolverAgent:
             # Streamを使用して出力を逐次処理
             chains = think_prompt | format_prompt | self.llm | StrOutputParser()
             ans: str = "".join(
-                [chunk for chunk in chains.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
+                [
+                    chunk
+                    for chunk in chains.stream(
+                        input=llm_input,
+                        config={"callbacks": [ConsoleCallbackHandler()]},
+                    )
+                ]
             )
             return parser.parse(ans)
         else:

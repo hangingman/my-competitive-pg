@@ -18,7 +18,7 @@ from wandbox import cli as wandbox_cli
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.llm_type import LLMType
 from CompeteAI.domain.models.source_code import SourceCode
-from CompeteAI.domain.models.test_case import TestCases, TestCase
+from CompeteAI.domain.models.test_case import TestCase, TestCases
 from CompeteAI.infra.memory.memory import CustomMemory
 from CompeteAI.interface_adapter.stream_handler import StreamHandler
 
@@ -69,11 +69,11 @@ class TesterAgent:
             examples=[
                 {
                     "question": "10001 番目の素数を求めよ.",
-                    "answer": TestCases(cases=[]).json()
+                    "answer": TestCases(cases=[]).json(),
                 },
                 {
                     "question": "1/3 と 1/2 の間に何個の分数があるか?",
-                    "answer": TestCases(cases=[]).json()
+                    "answer": TestCases(cases=[]).json(),
                 },
                 {
                     "question": """入力例 1
@@ -96,17 +96,21 @@ class TesterAgent:
 
 出力例 3
 5""",
-                    "answer": TestCases(cases=[
-                        TestCase(input="""2\n3 1 4 1 5 9""", answer="1"),
-                        TestCase(input="""1\n1 2 3""", answer="-1"),
-                        TestCase(input="""3\n8 2 2 7 4 6 5 3 8""", answer="5")
-                    ]).json()
-                }
+                    "answer": TestCases(
+                        cases=[
+                            TestCase(input="""2\n3 1 4 1 5 9""", answer="1"),
+                            TestCase(input="""1\n1 2 3""", answer="-1"),
+                            TestCase(input="""3\n8 2 2 7 4 6 5 3 8""", answer="5"),
+                        ]
+                    ).json(),
+                },
             ],
-            example_prompt=ChatPromptTemplate.from_messages([
-                ('human', '{question}'),
-                ('ai', '{answer}'),
-            ]),
+            example_prompt=ChatPromptTemplate.from_messages(
+                [
+                    ("human", "{question}"),
+                    ("ai", "{answer}"),
+                ]
+            ),
         )
         problem_prompt = HumanMessagePromptTemplate(
             prompt=PromptTemplate(
@@ -115,14 +119,22 @@ class TesterAgent:
             )
         )
 
-        prompt = ChatPromptTemplate.from_messages([test_case_prompt, few_shot_prompt, problem_prompt])
+        prompt = ChatPromptTemplate.from_messages(
+            [test_case_prompt, few_shot_prompt, problem_prompt]
+        )
         llm_input = {"problem": get_first_dict_by_key(chatlog, "problem")["msg"]}
 
         if streaming:
             # Streamを使用して出力を逐次処理
             chain = prompt | self.llm | StrOutputParser()
             ans: str = "".join(
-                [chunk for chunk in chain.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
+                [
+                    chunk
+                    for chunk in chain.stream(
+                        input=llm_input,
+                        config={"callbacks": [ConsoleCallbackHandler()]},
+                    )
+                ]
             )
             return parser.parse(ans)
         else:

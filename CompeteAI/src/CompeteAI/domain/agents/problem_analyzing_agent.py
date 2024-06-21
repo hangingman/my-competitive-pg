@@ -1,8 +1,10 @@
-from langchain.chains.llm import LLMChain
-from langchain_core.prompts.chat import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 from langchain.callbacks.tracers import ConsoleCallbackHandler
+from langchain.chains.llm import LLMChain
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts.chat import (ChatPromptTemplate,
+                                         HumanMessagePromptTemplate,
+                                         SystemMessagePromptTemplate)
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.llm_type import LLMType
@@ -68,7 +70,13 @@ class ProblemAnalyzingAgent:
             # streamを使用して出力を逐次処理, debug logを出すためにconfigを渡す必要がある
             # ref: https://qiita.com/isanakamishiro2/items/37ea6ac2049bf23e8405
             ans: str = "".join(
-                [chunk for chunk in chain.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
+                [
+                    chunk
+                    for chunk in chain.stream(
+                        input=llm_input,
+                        config={"callbacks": [ConsoleCallbackHandler()]},
+                    )
+                ]
             )
             return ans
         else:

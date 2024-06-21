@@ -1,10 +1,10 @@
+from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.chains.llm import LLMChain
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.chat import (ChatPromptTemplate,
                                          HumanMessagePromptTemplate,
                                          SystemMessagePromptTemplate)
-from langchain_core.output_parsers import StrOutputParser
-from langchain.callbacks.tracers import ConsoleCallbackHandler
 
 from CompeteAI.domain.factory.llm_factory import LLMFactory
 from CompeteAI.domain.models.llm_type import LLMType
@@ -67,7 +67,13 @@ class KnowledgeProviderAgent:
             parser = StrOutputParser()
             chain = prompt | self.llm | parser
             ans: str = "".join(
-                [chunk for chunk in chain.stream(input=llm_input, config={'callbacks': [ConsoleCallbackHandler()]})]
+                [
+                    chunk
+                    for chunk in chain.stream(
+                        input=llm_input,
+                        config={"callbacks": [ConsoleCallbackHandler()]},
+                    )
+                ]
             )
             return ans
         else:

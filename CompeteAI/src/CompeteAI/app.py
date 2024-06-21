@@ -115,7 +115,9 @@ def main():
             display_area = st.empty()
             handler = StreamHandler(display_area)
 
-            agent: ProblemSolverAgent = ProblemSolverAgent(llm=args.llm, handler=handler)
+            agent: ProblemSolverAgent = ProblemSolverAgent(
+                llm=args.llm, handler=handler
+            )
             algos: AlgorithmCandidates = agent.solve(st.session_state.chat_log)
 
             for i, candidate in enumerate(algos.candidates):
