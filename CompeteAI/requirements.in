@@ -6,3 +6,4 @@ langchain==0.2.1
 langchain-community
 wandbox-api
 pillow
+urllib3==2.2.2
