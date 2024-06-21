@@ -297,8 +297,10 @@ tzdata==2024.1
     # via pandas
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==2.2.1
-    # via requests
+urllib3==2.2.2
+    # via
+    #   -r requirements.in
+    #   requests
 wandbox-api==0.10.0
     # via -r requirements.in
 watchdog==4.0.1
