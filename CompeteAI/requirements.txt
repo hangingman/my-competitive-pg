@@ -260,7 +260,7 @@ sqlalchemy==2.0.30
     # via
     #   langchain
     #   langchain-community
-streamlit==1.35.0
+streamlit==1.37.0
     # via -r requirements.in
 tenacity==8.3.0
     # via
