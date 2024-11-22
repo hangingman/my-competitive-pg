@@ -278,7 +278,7 @@ toml==0.10.2
     #   wandbox-api
 toolz==0.12.1
     # via altair
-tornado==6.4.1
+tornado==6.4.2
     # via streamlit
 tqdm==4.66.4
     # via
